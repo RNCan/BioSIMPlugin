@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/plugins/BioSIMplugin" >
+        <file>icon.png</file>
+		<file>image-icon.png</file>
+    </qresource>
+</RCC>
