@@ -266,8 +266,7 @@ class BioSIMplugin:
 	  
     def qgis_(self,Csvin, Radarin,year,month,paths):
       QgsProject.instance().read(myproj)
-     # QgsProject.instance().clear()
-      #print "preparation des images"	  
+     # QgsProject.instance().clear()	  
       directory =os.path.dirname(paths)  
       if  not os.path.exists(directory):
         os.makedirs(directory)
@@ -317,7 +316,7 @@ class BioSIMplugin:
 #####################################################
         i = i+progress
         self.dlg.progressBar.setValue(int(i))
-        print 'test'
+        print hour+':'+minute
        #QgsProject.instance().write(myproj)
 #####################image ######################### 
         maps = self.getCompItemNames(self.iface.activeComposers()[0],QgsComposerItem.ComposerMap)
@@ -336,13 +335,12 @@ class BioSIMplugin:
         comp.addItem(title)  
         image = comp.printPageAsRaster(0)
         image.save(imagePath, "png")
-        print 'test'
         comp.removeItem(title)
-        #QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
-        #QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())
+        QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
+        QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())
       print "fin"
       self.dlg.progressBar.setValue(100)
-      #QgsProject.instance().clear()
+      QgsProject.instance().clear()
       self.dlg.progressBar.setValue(0)
       self.dlg.box_csv.clear()
       self.dlg.box_tif.clear()
@@ -359,31 +357,15 @@ class BioSIMplugin:
       self.qgis_(csv,tif_,year,month,path)
 	  		
     def run(self):
-        """Run method that performs all the real work"""
-	
-		# show the dialog
+        """Run method that performs all the real work"""	
         self.dlg.show()
-
-        # Run the dialog event loop
         result = self.dlg.exec_()
-
-        # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
             pass
 			
     def runimage(self):
-        """Run method that performs all the real work"""
-	
-		# show the dialog
+        """Run method that performs all the real work"""	
         self.dlg1.show()
-
-        # Run the dialog event loop
         result = self.dlg1.exec_()
-
-        # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
             pass
