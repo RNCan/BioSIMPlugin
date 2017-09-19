@@ -75,7 +75,7 @@ class BioSIMplugin:
         self.dlg1 = BioSIMpluginDialogimage()
         self.dlg.box_csv.clear()
         self.dlg.csv_button.clicked.connect(self.select_csv_file)
-        self.dlg.box_tif.clear()
+        self.dlg.clear_button.clicked.connect(self.cleartif)
         self.dlg.tif_button.clicked.connect(self.select_tif_file)
         self.dlg.box_output.clear()
         self.dlg.output_button.clicked.connect(self.select_output_file)
@@ -201,27 +201,37 @@ class BioSIMplugin:
         del self.toolbar
 
     def select_csv_file(self):
-       filename = QFileDialog.getOpenFileName(self.dlg, "Select csv file ",None, 'file csv *.csv')
-       self.dlg.box_csv.setText(filename)
-       if  not self.dlg.box_output.toPlainText():
-           self.dlg.box_output.setText(os.path.dirname(filename)+'/Image')
-		   
+        settings = QSettings("Company name", "Application name")
+        lastpath = settings.value("LASTPATH", ".")
+        path= QFileDialog.getOpenFileName(self.dlg, "Open cvs file",lastpath,"CSV files (*.csv)")
+        if path:
+          settings.setValue("LASTPATH", os.path.dirname(path))
+          self.dlg.box_csv.setText(path)
+          if  not self.dlg.box_output.toPlainText():
+            self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
+  
+		
     def select_tif_file(self):
-      filetif = QFileDialog.getOpenFileNames(self.dlg, 'Open file',None,"TIF files (*.tif)") 
+      settings = QSettings("Company name", "Application name")
+      last_path = settings.value("LAST_PATH", ".")
+      filetif = QFileDialog.getOpenFileNames(self.dlg,'Open file',last_path,"TIF files (*.tif)")        
       if filetif :
-       self.dlg.box_tif.setText(filetif[0])
-       for i in range(1,len(filetif)):
+       settings.setValue("LAST_PATH", os.path.dirname(filetif[0]))
+       for i in range(0,len(filetif)):
         self.dlg.box_tif.append(filetif[i])
-       data = str (filetif[0])
-       for i in range(0,len(data)-len('.tif')):
-        if data[i]== '\\':
+        data = str (filetif[0])
+        for i in range(0,len(data)-len('.tif')):
+         if data[i]== '\\':
 	       j=i 
-       data = data[j+1:len(data)-len('.tif')]  
-       if len(data)>8:
-         self.dlg.spin_an.setValue(int(data[0:4]))
-         self.dlg.spin_m.setValue(int(data[4:6]))
-         self.dlg.spin_j.setValue(int(data[6:8]))
-		 
+        data = data[j+1:len(data)-len('.tif')]  
+        if len(data)>12:
+          self.dlg.spin_an.setValue(int(data[0:4]))
+          self.dlg.spin_m.setValue(int(data[4:6]))
+          self.dlg.spin_j.setValue(int(data[6:8]))
+   
+    def cleartif(self):
+      self.dlg.box_tif.clear()	
+	  
     def select_output_file(self): 
      outputDir = QFileDialog(None, "Select output Directory")
      outputDir.setFileMode(QFileDialog.Directory)
@@ -232,14 +242,14 @@ class BioSIMplugin:
         outDir = outputDir.selectedFiles()[0]
         self.dlg.box_output.setText(outDir)
 
-    def gethour(self,indata):
+    def getdata(self,indata):
       data = str(indata)
       for i in range(0,len(data)-len('.tif')):
        if data[i]== '\\':
 	     j=i 
       data = data[j+1:len(data)-len('.tif')]  
       if len(data)>12:
-       return data [8:12]	 
+       return data [0:12]	 
 	   
     def getCompItemFromTitle(self,composition, type, title):
         for i in composition.items():
@@ -254,9 +264,9 @@ class BioSIMplugin:
            break
        return compItemNames       
 	  
-    def qgis_(self,Csvin, Radarin,year,month,day,paths):
+    def qgis_(self,Csvin, Radarin,year,month,paths):
       QgsProject.instance().read(myproj)
-      QgsProject.instance().clear()
+     # QgsProject.instance().clear()
       #print "preparation des images"	  
       directory =os.path.dirname(paths)  
       if  not os.path.exists(directory):
@@ -285,14 +295,15 @@ class BioSIMplugin:
       i=0
 ############## boucle principale  ########################
       for index_ in range(0,len(Radarin)):           
-        png_name=self.gethour(Radarin[index_])
-        hour=png_name[0:2]
-        minute=png_name[2:4]
+        png_name=self.getdata(Radarin[index_])
+        day=png_name[6:8]
+        hour=png_name[8:10]
+        minute=png_name[10:12]
         if len(month)==1:
 		   months='0'+month
         else:
 		   months=month
-        imagePath = paths+'/'+year+months+day+png_name+'.png'
+        imagePath = paths+'/'+year+months+day+hour+minute+'.png'
   
 ##########################################################	
         layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")                                             
@@ -306,7 +317,7 @@ class BioSIMplugin:
 #####################################################
         i = i+progress
         self.dlg.progressBar.setValue(int(i))
-        print layers[0].isValid()
+        print 'test'
        #QgsProject.instance().write(myproj)
 #####################image ######################### 
         maps = self.getCompItemNames(self.iface.activeComposers()[0],QgsComposerItem.ComposerMap)
@@ -327,15 +338,15 @@ class BioSIMplugin:
         image.save(imagePath, "png")
         print 'test'
         comp.removeItem(title)
-        QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
-        QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())
+        #QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
+        #QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())
       print "fin"
       self.dlg.progressBar.setValue(100)
       #QgsProject.instance().clear()
       self.dlg.progressBar.setValue(0)
       self.dlg.box_csv.clear()
       self.dlg.box_tif.clear()
-      QgsProject.instance().write(myproj)
+      #QgsProject.instance().write(myproj)
      # QgsApplication.exitQgis() 	  		
     def execute (self):
       csv =self.dlg.box_csv.toPlainText() 
@@ -343,10 +354,9 @@ class BioSIMplugin:
       path=self.dlg.box_output.toPlainText()
       year=str(self.dlg.spin_an.value())
       month= str(self.dlg.spin_m.value())
-      day=str(self.dlg.spin_j.value())
       tif_ = []
       tif_=tmp.split ('\n') 
-      self.qgis_(csv,tif_,year,month,day,path)
+      self.qgis_(csv,tif_,year,month,path)
 	  		
     def run(self):
         """Run method that performs all the real work"""
