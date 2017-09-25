@@ -1,4 +1,4 @@
-<Composer title="Composer 2" visible="1">
+<Composer title="Composer 1" visible="1">
  <Composition resizeToContentsMarginLeft="0" snapping="0" showPages="1" guidesVisible="1" resizeToContentsMarginTop="0" worldFileMap="" alignmentSnap="1" printResolution="300" paperWidth="297" gridVisible="0" snapGridOffsetX="0" smartGuides="1" snapGridOffsetY="0" resizeToContentsMarginRight="0" snapTolerancePixels="5" printAsRaster="0" generateWorldFile="0" paperHeight="210" numPages="1" snapGridResolution="10" resizeToContentsMarginBottom="0">
   <symbol alpha="1" clip_to_extent="1" type="fill" name="">
    <layer pass="0" class="SimpleFill" locked="0">
@@ -15,23 +15,14 @@
     <prop k="style" v="solid"/>
    </layer>
   </symbol>
-  <ComposerPicture resizeMode="0" svgBorderWidth="0.2" pictureRotation="0" pictureWidth="39.8481" svgFillColor="255,255,255,255" svgBorderColor="0,0,0,255" northMode="0" file="./Style/Legend1.png" northOffset="0" pictureHeight="24.3785" mapId="0" anchorPoint="0">
-   <ComposerItem pagey="0" page="1" id="" lastValidViewScaleFactor="-1" positionMode="0" positionLock="false" x="0" y="0" visibility="1" zValue="4" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="40.5301" outlineWidth="0.3" excludeFromExports="0" uuid="{dc3ea92c-81e7-4259-9229-a71ef993be0e}" height="24.3785" itemRotation="0" frame="false" pagex="0">
+  <ComposerPicture resizeMode="0" svgBorderWidth="0.2" pictureRotation="0" pictureWidth="44.7915" svgFillColor="255,255,255,255" svgBorderColor="0,0,0,255" northMode="0" file="./Style/Legend1.png" northOffset="0" pictureHeight="27.4028" mapId="0" anchorPoint="0">
+   <ComposerItem pagey="0" page="1" id="" lastValidViewScaleFactor="-1" positionMode="0" positionLock="false" x="-0.15" y="0" visibility="1" zValue="4" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="44.7915" outlineWidth="0.3" excludeFromExports="0" uuid="{06cb5a75-efdd-43af-92d0-9f59ae8a141e}" height="27.5746" itemRotation="0" frame="false" pagex="-0.15">
     <FrameColor alpha="255" red="0" blue="0" green="0"/>
     <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
     <dataDefinedSource expr="" field="" active="false" useExpr="true"/>
     <customproperties/>
    </ComposerItem>
   </ComposerPicture>
-  <ComposerLabel valign="32" marginX="1" marginY="1" labelText="" htmlState="0" halign="1">
-   <LabelFont description="Times New Roman,14,-1,5,75,0,0,0,0,0" style=""/>
-   <FontColor red="0" blue="0" green="0"/>
-   <ComposerItem pagey="4.7941" page="1" id="" lastValidViewScaleFactor="-1" positionMode="0" positionLock="false" x="258.349" y="4.7941" visibility="1" zValue="3" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="36.7548" outlineWidth="0.3" excludeFromExports="0" uuid="{d41ee8ef-9f92-4848-ab68-b46f4b893057}" height="9.5882" itemRotation="0" frame="false" pagex="258.349">
-    <FrameColor alpha="255" red="0" blue="0" green="0"/>
-    <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
-    <customproperties/>
-   </ComposerItem>
-  </ComposerLabel>
   <ComposerMap followPreset="false" mapRotation="0" keepLayerSet="false" followPresetName="" id="0" previewMode="Cache" drawCanvasItems="true">
    <Extent ymin="43.79847130204072414" xmin="-74.80428897929770926" ymax="52.87654494678390904" xmax="-61.96529911030377491"/>
    <LayerSet/>
@@ -85,9 +76,9 @@
     <annotationFontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
    </ComposerMapGrid>
    <AtlasMap scalingMode="2" atlasDriven="0" margin="0.10000000000000001"/>
-   <ComposerItem pagey="0" page="1" id="" lastValidViewScaleFactor="2.07632" positionMode="0" positionLock="false" x="0" y="0" visibility="1" zValue="1" background="true" transparency="0" frameJoinStyle="miter" blendMode="0" width="297" outlineWidth="0.3" excludeFromExports="0" uuid="{55de4d06-0598-46ec-a3d8-2d25b0756752}" height="210" itemRotation="0" frame="true" pagex="0">
+   <ComposerItem pagey="0" page="1" id="" lastValidViewScaleFactor="3.75462" positionMode="0" positionLock="false" x="0" y="0" visibility="1" zValue="1" background="true" transparency="0" frameJoinStyle="miter" blendMode="0" width="297" outlineWidth="0.3" excludeFromExports="0" uuid="{aed73e30-15bf-4d75-8c90-6a9586fb14b2}" height="210" itemRotation="0" frame="true" pagex="0">
     <FrameColor alpha="255" red="0" blue="0" green="0"/>
-    <BackgroundColor alpha="255" red="190" blue="237" green="202"/>
+    <BackgroundColor alpha="255" red="219" blue="214" green="219"/>
     <customproperties/>
    </ComposerItem>
   </ComposerMap>

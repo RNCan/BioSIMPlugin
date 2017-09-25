@@ -21,9 +21,10 @@
  ***************************************************************************/
 """
 
-
+from csv import reader, writer
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon, QFileDialog, QDialog,QFont
+from PyQt4.QtGui import QAction, QIcon, QFileDialog, QDialog,QFont,QImage,QPainter
+from PyQt4.QtXml import QDomDocument
 from qgis.gui import QgsMessageBar,QgsMapCanvas, QgsLayerTreeMapCanvasBridge
 # Initialize Qt resources from file resources.py
 import resources
@@ -33,13 +34,12 @@ from BioSIM_dialog_image import BioSIMpluginDialogimage
 import os.path
 from qgis.core import *
 from PyQt4.QtCore import *
-
+from datetime import date
 folderPath = os.path.dirname(__file__)+'/QGIS-PROJ/'
 projectPath = folderPath+'Dispersal.qgs'
-#templatePath = folderPath+'animation.qpt'  
 ameriquenord=folderPath+'ameriquenord.shp'
 QCmaps=folderPath+'County.shp'
-myproj= QFileInfo(projectPath)
+projanimation= QFileInfo(folderPath+'Dispersal.qgs')
 proj=QgsProject.instance() 
 
 class BioSIMplugin:
@@ -75,12 +75,16 @@ class BioSIMplugin:
         self.dlg1 = BioSIMpluginDialogimage()
         self.dlg.box_csv.clear()
         self.dlg.csv_button.clicked.connect(self.select_csv_file)
+        self.dlg1.box_csv.clear()
+        self.dlg1.csv_button.clicked.connect(self.select_csv_file1)
         self.dlg.clear_button.clicked.connect(self.cleartif)
         self.dlg.tif_button.clicked.connect(self.select_tif_file)
         self.dlg.box_output.clear()
         self.dlg.output_button.clicked.connect(self.select_output_file)
+        self.dlg1.box_output.clear()
+        self.dlg1.output_button.clicked.connect(self.select_output_file1)
         self.dlg.ok_button.clicked.connect(self.execute)
-        
+        self.dlg1.run_button.clicked.connect(self.executeimage)
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -95,7 +99,6 @@ class BioSIMplugin:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('BioSIMplugin', message)
-
 
     def add_action(
         self,
@@ -200,7 +203,7 @@ class BioSIMplugin:
         # remove the toolbar
         del self.toolbar
 
-    def select_csv_file(self):
+    def select_csv_file(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
         path= QFileDialog.getOpenFileName(self.dlg, "Open cvs file",lastpath,"CSV files (*.csv)")
@@ -210,7 +213,16 @@ class BioSIMplugin:
           if  not self.dlg.box_output.toPlainText():
             self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
   
-		
+    def select_csv_file1(self): 
+        settings = QSettings("Company name", "Application name")
+        lastpath = settings.value("LASTPATH", ".")
+        path= QFileDialog.getOpenFileName(self.dlg1, "Open cvs file",lastpath,"CSV files (*.csv)")
+        if path:
+          settings.setValue("LASTPATH", os.path.dirname(path))
+          self.dlg1.box_csv.setText(path)
+          if  not self.dlg1.box_output.toPlainText():
+            self.dlg1.box_output.setText(os.path.dirname(path)+'/Image')
+	
     def select_tif_file(self):
       settings = QSettings("Company name", "Application name")
       last_path = settings.value("LAST_PATH", ".")
@@ -231,7 +243,7 @@ class BioSIMplugin:
    
     def cleartif(self):
       self.dlg.box_tif.clear()	
-	  
+	
     def select_output_file(self): 
      outputDir = QFileDialog(None, "Select output Directory")
      outputDir.setFileMode(QFileDialog.Directory)
@@ -240,7 +252,17 @@ class BioSIMplugin:
      outputDir.show()
      if outputDir.exec_() == QDialog.Accepted:
         outDir = outputDir.selectedFiles()[0]
-        self.dlg.box_output.setText(outDir)
+        self.dlg.box_output.setText(outDir)	
+				
+    def select_output_file1(self): 
+     outputDir = QFileDialog(None, "Select output Directory")
+     outputDir.setFileMode(QFileDialog.Directory)
+     outputDir.setAcceptMode(QFileDialog.AcceptOpen)
+     outputDir.setOption(QFileDialog.ShowDirsOnly, True)
+     outputDir.show()
+     if outputDir.exec_() == QDialog.Accepted:
+        outDir = outputDir.selectedFiles()[0]
+        self.dlg1.box_output.setText(outDir)
 
     def getdata(self,indata):
       data = str(indata)
@@ -265,9 +287,8 @@ class BioSIMplugin:
        return compItemNames       
 	  
     def qgis_(self,Csvin, Radarin,year,month,paths):
-      QgsProject.instance().read(myproj)
-     # QgsProject.instance().clear()	  
-      directory =os.path.dirname(paths)  
+      self.iface.newProject()
+      directory =os.path.dirname(paths+'/')  
       if  not os.path.exists(directory):
         os.makedirs(directory)
 ##########################
@@ -292,18 +313,17 @@ class BioSIMplugin:
       QgsMapLayerRegistry.instance().addMapLayer(layers[3])
       progress=100/(len(Radarin)* 1.0)
       i=0
+      if len(month)==1:
+		   months='0'+month
+      else:
+		   months=month
 ############## boucle principale  ########################
       for index_ in range(0,len(Radarin)):           
         png_name=self.getdata(Radarin[index_])
         day=png_name[6:8]
         hour=png_name[8:10]
         minute=png_name[10:12]
-        if len(month)==1:
-		   months='0'+month
-        else:
-		   months=month
         imagePath = paths+'/'+year+months+day+hour+minute+'.png'
-  
 ##########################################################	
         layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")                                             
         layers[0].loadNamedStyle(folderPath+'Style/newcsv.qml')                    
@@ -317,35 +337,42 @@ class BioSIMplugin:
         i = i+progress
         self.dlg.progressBar.setValue(int(i))
         print hour+':'+minute
-       #QgsProject.instance().write(myproj)
+        QgsProject.instance().write(projanimation)
 #####################image ######################### 
-        maps = self.getCompItemNames(self.iface.activeComposers()[0],QgsComposerItem.ComposerMap)
-        for c in self.iface.activeComposers():
-          if c.composerWindow().windowTitle() == 'ahmed':
-           comp = c.composition()
         canvas = self.iface.mapCanvas()
-        canvas.setRenderFlag(False)
-        map_item = self.getCompItemFromTitle(comp,QgsComposerItem.ComposerMap,maps)
-        comp.refreshItems()
-        title = QgsComposerLabel(comp)
+        QgsProject.instance().read(projanimation)
+        bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
+        bridge.setCanvasLayers()
+        composition = QgsComposition(canvas.mapSettings())
+        composerAsDocument = QDomDocument()
+        composerAsDocument.setContent(QFile(folderPath+'animation.qpt'))
+        composition.loadFromTemplate(composerAsDocument, {})
+        title = QgsComposerLabel(composition)
         title.setText(str(year+'/'+months+'/'+day+' '+hour+':'+minute+'(GMT -4)'))
         title.setFont(QFont("Cambria",15, QFont.Bold))
         title.setItemPosition(228,5.2)
         title.adjustSizeToText()  
-        comp.addItem(title)  
-        image = comp.printPageAsRaster(0)
+        composition.addItem(title)  
+        dpmm = 300 / 25.4
+        width = int(dpmm * composition.paperWidth())
+        height = int(dpmm * composition.paperHeight())
+        image = QImage(QSize(width, height), QImage.Format_ARGB32)
+        image.setDotsPerMeterX(dpmm * 1000)
+        image.setDotsPerMeterY(dpmm * 1000)
+        image.fill(0)
+        imagePainter = QPainter(image)
+        composition.renderPage( imagePainter, 0 )
+        imagePainter.end()
         image.save(imagePath, "png")
-        comp.removeItem(title)
         QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
         QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())
       print "fin"
       self.dlg.progressBar.setValue(100)
-      QgsProject.instance().clear()
+    #  QgsProject.instance().clear()
       self.dlg.progressBar.setValue(0)
       self.dlg.box_csv.clear()
       self.dlg.box_tif.clear()
-      #QgsProject.instance().write(myproj)
-     # QgsApplication.exitQgis() 	  		
+	  
     def execute (self):
       csv =self.dlg.box_csv.toPlainText() 
       tmp = self.dlg.box_tif.toPlainText()
@@ -355,6 +382,149 @@ class BioSIMplugin:
       tif_ = []
       tif_=tmp.split ('\n') 
       self.qgis_(csv,tif_,year,month,path)
+    
+	
+    def subcsv(self,csv,dd,fd,m): 
+     data = list(reader(open(str(csv), 'rb'), delimiter=","))
+     csvf=open(folderPath+'/incsv.csv', 'wb')
+     out = writer(csvf, delimiter=',' , lineterminator='\n')
+     rownum = 0
+     index_=-999
+     for row in data:
+      if rownum==0:
+       header =row
+       rownum=1
+       out.writerow(row)
+       for col in range(0,len(row)):   
+        if header[col]=='Day':  
+         index_=col 
+         break 
+      else:
+       if row[index_-1]== m and dd <= row[index_]<= fd:
+          out.writerow(row)
+          rownum=3
+     csvf.close()
+    # if rownum!=3:
+	#  os.remove(folderPath+'/incsv.csv')
+	
+	
+    def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H):
+      self.iface.newProject()
+      #QgsProject.instance().read(projimage)
+      #QgsProject.instance().clear()	  
+      directory =os.path.dirname(paths+'/')  
+      if  not os.path.exists(directory):
+        os.makedirs(directory)
+##########################
+      layers=[]
+      for x in range(0,3):
+       layers.append('')
+#################  add csv file  ############################  
+      layers[1] = QgsVectorLayer(ameriquenord, "maps", "ogr")
+      layers[1].loadNamedStyle(folderPath+'Style/layer.qml')                     
+      layers[1].triggerRepaint() 
+      layers[2] = QgsVectorLayer(QCmaps, "quebec", "ogr")
+      layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
+      layers[2].triggerRepaint() 
+      uricsv = "file:///"+Csvin+"?delimiter=%s&xField=%s&yField=%s" % (",","Longitude","Latitude") 
+      layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext") 
+      if not layers[0].isValid():
+         uricsv ="file:///"+Csvin+"?delimiter=%s&xField=%s&yField=%s" % (",","lon","lat")
+         layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")
+      if not layers[0].isValid():
+         print 'is not good'
+      QgsMapLayerRegistry.instance().addMapLayer(layers[1])
+      QgsMapLayerRegistry.instance().addMapLayer(layers[2])
+      delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))
+      progress=100/((delta.days)* 1.0)
+      i=0
+      layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
+      layers[0].loadNamedStyle(folderPath+'Style/csv.qml')                    
+      layers[0].triggerRepaint()
+      QgsMapLayerRegistry.instance().addMapLayer(layers[0])
+#################################################################################
+      fd=0
+      if int(Dmonth)!= int(Fmonth):
+        if Dmonth=='6':
+		   fd='30'
+        else: 
+		   fd='31'
+############################################################################		
+      for index in range (0,delta.days + 1):
+       i = i+progress
+       self.dlg1.progressBar.setValue(int(i))
+       print i
+       if str(int(Dday)+index)>fd and int(Dmonth)!= int(Fmonth):
+          dm=fm=Fmonth
+          dj=int(Dday)+index-int(fd)
+          fj=dj+1
+       elif str(int(Dday)+index)==fd and int(Dmonth)!= int(Fmonth):
+         dm=Dmonth
+         fm=Fmonth
+         dj=int(Dday)+index
+         fj=1
+       else :		 
+         dm=Dmonth
+         fm=Dmonth
+         dj=int(Dday)+index
+         fj=dj+1
+       if len(dm)==1:
+		months='0'+dm
+       else:
+		months=dm
+       if len(str(dj))==1:
+		j='0'+str(dj)
+       else:
+		j=str(dj)
+       imagePath = paths+'/'+year+months+j+'.png' 
+       layers[0].setSubsetString('("Year"='+year+'AND "Month"='+dm+' AND "Day"='+str(dj)+' AND "Hour">'+H+')  OR  ("Year"='+year+'AND "Month"='+fm+' AND "Day"='+str(fj)+' AND "Hour"<'+H+')' )
+       QgsProject.instance().write(projanimation)
+#####################image ######################### 
+       canvas = self.iface.mapCanvas()
+       QgsProject.instance().read(projanimation)
+       bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
+       bridge.setCanvasLayers()
+       composition = QgsComposition(canvas.mapSettings())
+       composerAsDocument = QDomDocument()
+       composerAsDocument.setContent(QFile(folderPath+'image-jour.qpt'))
+       composition.loadFromTemplate(composerAsDocument, {})
+       title = QgsComposerLabel(composition)
+       title.setText(year+'/'+months+'/'+j)
+       title.setFont(QFont("Cambria",15, QFont.Bold))
+       title.setItemPosition(248,5.2)
+       title.adjustSizeToText()  
+       composition.addItem(title)  
+       dpmm = 300 / 25.4
+       width = int(dpmm * composition.paperWidth())
+       height = int(dpmm * composition.paperHeight())
+       image = QImage(QSize(width, height), QImage.Format_ARGB32)
+       image.setDotsPerMeterX(dpmm * 1000)
+       image.setDotsPerMeterY(dpmm * 1000)
+       image.fill(0)
+       imagePainter = QPainter(image)
+       composition.renderPage( imagePainter, 0 )
+       imagePainter.end()
+       image.save(imagePath, "png")
+	  
+	  
+	  
+      self.dlg1.progressBar.setValue(0)
+      print 'fini'
+      #self.dlg1.box_csv.clear()
+	  
+    def executeimage (self):
+      csv =self.dlg1.box_csv.toPlainText() 
+      path=self.dlg1.box_output.toPlainText()
+      year=str(self.dlg1.spin_an.value())
+      Dmonth= str(self.dlg1.spin_m.value())
+      Fmonth= str(self.dlg1.spin_m1.value())
+      Dday= str(self.dlg1.spin_j.value())
+      Fday= str(self.dlg1.spin_j1.value())
+      H= str(self.dlg1.spin_h.value())
+      #self.subcsv(csv,Dday,Fday,month)
+     # csvf=folderPath+'/incsv.csv'
+      self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H)
+      print 'run' 
 	  		
     def run(self):
         """Run method that performs all the real work"""	
