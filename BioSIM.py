@@ -272,22 +272,9 @@ class BioSIMplugin:
       data = data[j+1:len(data)-len('.tif')]  
       if len(data)>12:
        return data [0:12]	 
-	   
-    def getCompItemFromTitle(self,composition, type, title):
-        for i in composition.items():
-          if i.type() == type and i.scene() and i.displayName() == title:
-            compItem = i
-        return compItem  
-		
-    def getCompItemNames(self,composition, type):
-       for i in composition.items():
-         if i.type() == type and i.scene():
-           compItemNames=i.displayName()
-           break
-       return compItemNames       
-	  
+	      	  
     def qgis_(self,Csvin, Radarin,year,month,paths):
-      self.iface.newProject()
+      #self.iface.newProject()
       directory =os.path.dirname(paths+'/')  
       if  not os.path.exists(directory):
         os.makedirs(directory)
@@ -325,8 +312,11 @@ class BioSIMplugin:
         minute=png_name[10:12]
         imagePath = paths+'/'+year+months+day+hour+minute+'.png'
 ##########################################################	
-        layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")                                             
-        layers[0].loadNamedStyle(folderPath+'Style/newcsv.qml')                    
+        style=folderPath+'Style/newcsv.qml'
+        if self.dlg.symbole_Box.currentText()=='petit':
+		  sytle=folderPath+'Style/csv1.qml'  
+        layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
+        layers[0].loadNamedStyle(style)                    
         layers[0].triggerRepaint()                                                                                       	   
 ##################  add tif file  #######################     
         layers[1]=QgsRasterLayer(Radarin[index_], hour+':'+minute)
@@ -370,7 +360,7 @@ class BioSIMplugin:
       self.dlg.progressBar.setValue(100)
     #  QgsProject.instance().clear()
       self.dlg.progressBar.setValue(0)
-      self.dlg.box_csv.clear()
+     # self.dlg.box_csv.clear()
       self.dlg.box_tif.clear()
 	  
     def execute (self):
@@ -379,14 +369,21 @@ class BioSIMplugin:
       path=self.dlg.box_output.toPlainText()
       year=str(self.dlg.spin_an.value())
       month= str(self.dlg.spin_m.value())
+      day=str(self.dlg.spin_j.value())
       tif_ = []
-      tif_=tmp.split ('\n') 
-      self.qgis_(csv,tif_,year,month,path)
-    
-	
-    def subcsv(self,csv,dd,fd,m): 
+      tif_=tmp.split ('\n')
+     # self.subcsv(csv,day,month)
+      csvf=folderPath+'/incsv.csv'	  
+      self.qgis_(csvf,tif_,year,month,path)
+    def ajoutzero(self,a,b):
+      if len(a)!=1 and len(b)==1:
+         b='0'+b
+      return b
+	  
+	  
+    def subcsvjour(self,csv,dd,md,df,mf): 
      data = list(reader(open(str(csv), 'rb'), delimiter=","))
-     csvf=open(folderPath+'/incsv.csv', 'wb')
+     csvf=open(folderPath+'/jcsv.csv', 'wb')
      out = writer(csvf, delimiter=',' , lineterminator='\n')
      rownum = 0
      index_=-999
@@ -400,16 +397,27 @@ class BioSIMplugin:
          index_=col 
          break 
       else:
-       if row[index_-1]== m and dd <= row[index_]<= fd:
+       md=self.ajoutzero(row[index_-1],md)
+       dd=self.ajoutzero(row[index_],dd)
+       mf=self.ajoutzero(row[index_-1],mf)
+       df=self.ajoutzero(row[index_],df)
+       if (row[index_-1]== md and row[index_]== dd) or (row[index_-1]== mf and row[index_]== df) :
           out.writerow(row)
-          rownum=3
+          #rownum=3
      csvf.close()
-    # if rownum!=3:
-	#  os.remove(folderPath+'/incsv.csv')
+
 	
-	
+    def linkcsv(self,Csvf):
+      uricsv = "file:///"+Csvf+"?delimiter=%s&xField=%s&yField=%s" % (",","Longitude","Latitude") 
+      layer = QgsVectorLayer(uricsv,'data', "delimitedtext") 
+      if not layer.isValid():
+         uricsv ="file:///"+Csvf+"?delimiter=%s&xField=%s&yField=%s" % (",","lon","lat")
+         layer = QgsVectorLayer(uricsv,'data', "delimitedtext")
+      if not layer.isValid():
+         print 'is not good'	 
+      return uricsv	  
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H):
-      self.iface.newProject()
+    #  self.iface.newProject()
       #QgsProject.instance().read(projimage)
       #QgsProject.instance().clear()	  
       directory =os.path.dirname(paths+'/')  
@@ -426,22 +434,12 @@ class BioSIMplugin:
       layers[2] = QgsVectorLayer(QCmaps, "quebec", "ogr")
       layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[2].triggerRepaint() 
-      uricsv = "file:///"+Csvin+"?delimiter=%s&xField=%s&yField=%s" % (",","Longitude","Latitude") 
-      layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext") 
-      if not layers[0].isValid():
-         uricsv ="file:///"+Csvin+"?delimiter=%s&xField=%s&yField=%s" % (",","lon","lat")
-         layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")
-      if not layers[0].isValid():
-         print 'is not good'
       QgsMapLayerRegistry.instance().addMapLayer(layers[1])
       QgsMapLayerRegistry.instance().addMapLayer(layers[2])
       delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))
-      progress=100/((delta.days)* 1.0)
+      progress=100/((delta.days)+1* 1.0)
       i=0
-      layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
-      layers[0].loadNamedStyle(folderPath+'Style/csv.qml')                    
-      layers[0].triggerRepaint()
-      QgsMapLayerRegistry.instance().addMapLayer(layers[0])
+      
 #################################################################################
       fd=0
       if int(Dmonth)!= int(Fmonth):
@@ -477,6 +475,12 @@ class BioSIMplugin:
        else:
 		j=str(dj)
        imagePath = paths+'/'+year+months+j+'.png' 
+       self.subcsvjour(Csvin,str(dj),dm,str(fj),fm)
+       uricsv=self.linkcsv(folderPath+'/jcsv.csv')
+       layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
+       layers[0].loadNamedStyle(folderPath+'Style/csv.qml')                    
+       layers[0].triggerRepaint()
+       QgsMapLayerRegistry.instance().addMapLayer(layers[0])
        layers[0].setSubsetString('("Year"='+year+'AND "Month"='+dm+' AND "Day"='+str(dj)+' AND "Hour">'+H+')  OR  ("Year"='+year+'AND "Month"='+fm+' AND "Day"='+str(fj)+' AND "Hour"<'+H+')' )
        QgsProject.instance().write(projanimation)
 #####################image ######################### 
@@ -505,7 +509,7 @@ class BioSIMplugin:
        composition.renderPage( imagePainter, 0 )
        imagePainter.end()
        image.save(imagePath, "png")
-	  
+       QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())
 	  
 	  
       self.dlg1.progressBar.setValue(0)
@@ -521,8 +525,6 @@ class BioSIMplugin:
       Dday= str(self.dlg1.spin_j.value())
       Fday= str(self.dlg1.spin_j1.value())
       H= str(self.dlg1.spin_h.value())
-      #self.subcsv(csv,Dday,Fday,month)
-     # csvf=folderPath+'/incsv.csv'
       self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H)
       print 'run' 
 	  		

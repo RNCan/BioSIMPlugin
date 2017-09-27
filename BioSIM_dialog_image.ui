@@ -286,7 +286,7 @@ p, li { white-space: pre-wrap; }
     <number>31</number>
    </property>
    <property name="value">
-    <number>15</number>
+    <number>1</number>
    </property>
   </widget>
   <widget class="QSpinBox" name="spin_j1">
@@ -311,7 +311,7 @@ p, li { white-space: pre-wrap; }
     <number>31</number>
    </property>
    <property name="value">
-    <number>16</number>
+    <number>2</number>
    </property>
   </widget>
   <widget class="QSpinBox" name="spin_m">
@@ -336,7 +336,7 @@ p, li { white-space: pre-wrap; }
     <number>12</number>
    </property>
    <property name="value">
-    <number>7</number>
+    <number>8</number>
    </property>
   </widget>
   <widget class="QLabel" name="label_j_2">
@@ -400,7 +400,7 @@ p, li { white-space: pre-wrap; }
     <number>12</number>
    </property>
    <property name="value">
-    <number>7</number>
+    <number>8</number>
    </property>
   </widget>
  </widget>
