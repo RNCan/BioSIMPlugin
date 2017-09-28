@@ -288,39 +288,32 @@ class BioSIMplugin:
       layers[2].triggerRepaint() 
       layers[3] = QgsVectorLayer(QCmaps, "quebec", "ogr")
       layers[3].loadNamedStyle(folderPath+'Style/layer.qml')                     
-      layers[3].triggerRepaint() 
-      uricsv = "file:///"+Csvin+"?delimiter=%s&xField=%s&yField=%s" % (",","Longitude","Latitude") 
-      layers[0] = QgsVectorLayer(uricsv,'hour', "delimitedtext") 
-      if not layers[0].isValid():
-         uricsv ="file:///"+Csvin+"?delimiter=%s&xField=%s&yField=%s" % (",","lon","lat")
-         layers[0] = QgsVectorLayer(uricsv,'hour', "delimitedtext")
-      if not layers[0].isValid():
-         print 'is not good'
+      layers[3].triggerRepaint()  
+     # uricsv = self.linkcsv(Csvin)
       QgsMapLayerRegistry.instance().addMapLayer(layers[2])
       QgsMapLayerRegistry.instance().addMapLayer(layers[3])
       progress=100/(len(Radarin)* 1.0)
       i=0
-      if len(month)==1:
-		   months='0'+month
-      else:
-		   months=month
 ############## boucle principale  ########################
       for index_ in range(0,len(Radarin)):           
         png_name=self.getdata(Radarin[index_])
+        months=png_name[4:6]
         day=png_name[6:8]
         hour=png_name[8:10]
         minute=png_name[10:12]
-        imagePath = paths+'/'+year+months+day+hour+minute+'.png'
+        imagePath = paths+'/'+png_name+'.png'
 ##########################################################	
         style=folderPath+'Style/newcsv.qml'
         if self.dlg.symbole_Box.currentText()=='petit':
 		  sytle=folderPath+'Style/csv1.qml'  
+        self.subcsvjour(Csvin,day,months,minute,hour,False)
+        uricsv=self.linkcsv(folderPath+'/jcsv.csv')
         layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
         layers[0].loadNamedStyle(style)                    
         layers[0].triggerRepaint()                                                                                       	   
 ##################  add tif file  #######################     
         layers[1]=QgsRasterLayer(Radarin[index_], hour+':'+minute)
-        layers[0].setSubsetString('("Year"='+year+' AND "Month"='+month+' AND "Day"='+day+' AND "Hour"='+hour+' AND "Minute"='+minute+')')	
+        layers[0].setSubsetString('("Year"='+year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+hour+' AND "Minute"='+minute+')')	
         QgsMapLayerRegistry.instance().addMapLayer(layers[1])
         QgsMapLayerRegistry.instance().addMapLayer(layers[0])
 #####################################################
@@ -371,17 +364,11 @@ class BioSIMplugin:
       month= str(self.dlg.spin_m.value())
       day=str(self.dlg.spin_j.value())
       tif_ = []
-      tif_=tmp.split ('\n')
-     # self.subcsv(csv,day,month)
-      csvf=folderPath+'/incsv.csv'	  
-      self.qgis_(csvf,tif_,year,month,path)
-    def ajoutzero(self,a,b):
-      if len(a)!=1 and len(b)==1:
-         b='0'+b
-      return b
+      tif_=tmp.split ('\n')	  
+      self.qgis_(csv,tif_,year,month,path)
 	  
 	  
-    def subcsvjour(self,csv,dd,md,df,mf): 
+    def subcsvjour(self,csv,dd,md,df,mf,minute): 
      data = list(reader(open(str(csv), 'rb'), delimiter=","))
      csvf=open(folderPath+'/jcsv.csv', 'wb')
      out = writer(csvf, delimiter=',' , lineterminator='\n')
@@ -397,13 +384,12 @@ class BioSIMplugin:
          index_=col 
          break 
       else:
-       md=self.ajoutzero(row[index_-1],md)
-       dd=self.ajoutzero(row[index_],dd)
-       mf=self.ajoutzero(row[index_-1],mf)
-       df=self.ajoutzero(row[index_],df)
-       if (row[index_-1]== md and row[index_]== dd) or (row[index_-1]== mf and row[index_]== df) :
-          out.writerow(row)
-          #rownum=3
+       if minute:
+          if (int(row[index_-1])== int(md) and int(row[index_])== int(dd)) or (int(row[index_-1])== int(mf) and int(row[index_])== int(df)) :
+            out.writerow(row)
+       else:  
+         if (int(row[index_-1])== int(md) and int(row[index_])== int(dd) and int(row[index_+1])== int(mf) and int(row[index_+2])== int(df)) :
+           out.writerow(row) 
      csvf.close()
 
 	
@@ -416,6 +402,8 @@ class BioSIMplugin:
       if not layer.isValid():
          print 'is not good'	 
       return uricsv	  
+	  
+	  
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H):
     #  self.iface.newProject()
       #QgsProject.instance().read(projimage)
@@ -475,7 +463,7 @@ class BioSIMplugin:
        else:
 		j=str(dj)
        imagePath = paths+'/'+year+months+j+'.png' 
-       self.subcsvjour(Csvin,str(dj),dm,str(fj),fm)
+       self.subcsvjour(Csvin,str(dj),dm,str(fj),fm,True)
        uricsv=self.linkcsv(folderPath+'/jcsv.csv')
        layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
        layers[0].loadNamedStyle(folderPath+'Style/csv.qml')                    
