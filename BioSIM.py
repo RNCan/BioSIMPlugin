@@ -25,7 +25,7 @@ from csv import reader, writer
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QDialog,QFont,QImage,QPainter
 from PyQt4.QtXml import QDomDocument
-from qgis.gui import QgsMessageBar,QgsMapCanvas, QgsLayerTreeMapCanvasBridge
+from qgis.gui import *
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -286,12 +286,12 @@ class BioSIMplugin:
       layers[2] = QgsVectorLayer(ameriquenord, "maps", "ogr")
       layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[2].triggerRepaint() 
-      layers[3] = QgsVectorLayer(QCmaps, "quebec", "ogr")
-      layers[3].loadNamedStyle(folderPath+'Style/layer.qml')                     
-      layers[3].triggerRepaint()  
+     # layers[3] = QgsVectorLayer(QCmaps, "quebec", "ogr")
+     # layers[3].loadNamedStyle(folderPath+'Style/layer.qml')                     
+     # layers[3].triggerRepaint()  
      # uricsv = self.linkcsv(Csvin)
       QgsMapLayerRegistry.instance().addMapLayer(layers[2])
-      QgsMapLayerRegistry.instance().addMapLayer(layers[3])
+    #  QgsMapLayerRegistry.instance().addMapLayer(layers[3])
       progress=100/(len(Radarin)* 1.0)
       i=0
 ############## boucle principale  ########################
@@ -305,7 +305,7 @@ class BioSIMplugin:
 ##########################################################	
         style=folderPath+'Style/newcsv.qml'
         if self.dlg.symbole_Box.currentText()=='petit':
-		  sytle=folderPath+'Style/csv1.qml'  
+          style=folderPath+'Style/csv.qml' 
         self.subcsvjour(Csvin,day,months,minute,hour,False)
         uricsv=self.linkcsv(folderPath+'/jcsv.csv')
         layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
@@ -335,7 +335,11 @@ class BioSIMplugin:
         title.setFont(QFont("Cambria",15, QFont.Bold))
         title.setItemPosition(228,5.2)
         title.adjustSizeToText()  
-        composition.addItem(title)  
+        composition.addItem(title)
+        Legend = QgsComposerPicture(composition)
+        Legend.setPictureFile(folderPath+'/Style/Legend1.png')
+        Legend.setSceneRect(QRectF(0,0,40,40)) 
+        composition.addItem(Legend)		
         dpmm = 300 / 25.4
         width = int(dpmm * composition.paperWidth())
         height = int(dpmm * composition.paperHeight())
@@ -419,11 +423,11 @@ class BioSIMplugin:
       layers[1] = QgsVectorLayer(ameriquenord, "maps", "ogr")
       layers[1].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[1].triggerRepaint() 
-      layers[2] = QgsVectorLayer(QCmaps, "quebec", "ogr")
-      layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
-      layers[2].triggerRepaint() 
+      #layers[2] = QgsVectorLayer(QCmaps, "quebec", "ogr")
+      #layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
+     # layers[2].triggerRepaint() 
       QgsMapLayerRegistry.instance().addMapLayer(layers[1])
-      QgsMapLayerRegistry.instance().addMapLayer(layers[2])
+     # QgsMapLayerRegistry.instance().addMapLayer(layers[2])
       delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))
       progress=100/((delta.days)+1* 1.0)
       i=0
@@ -481,11 +485,15 @@ class BioSIMplugin:
        composerAsDocument.setContent(QFile(folderPath+'image-jour.qpt'))
        composition.loadFromTemplate(composerAsDocument, {})
        title = QgsComposerLabel(composition)
-       title.setText(year+'/'+months+'/'+j)
+       title.setText(str(year+'/'+months+'/'+j))
        title.setFont(QFont("Cambria",15, QFont.Bold))
        title.setItemPosition(248,5.2)
        title.adjustSizeToText()  
-       composition.addItem(title)  
+       composition.addItem(title)
+       Legend = QgsComposerPicture(composition)
+       Legend.setPictureFile(folderPath+'/Style/Legend.png')
+       Legend.setSceneRect(QRectF(0,0,50,50)) 
+       composition.addItem(Legend)	   
        dpmm = 300 / 25.4
        width = int(dpmm * composition.paperWidth())
        height = int(dpmm * composition.paperHeight())
