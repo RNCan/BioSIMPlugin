@@ -240,10 +240,14 @@ class BioSIMplugin:
           self.dlg.spin_an.setValue(int(data[0:4]))
           self.dlg.spin_m.setValue(int(data[4:6]))
           self.dlg.spin_j.setValue(int(data[6:8]))
-   
+          self.dlg.spin_an.setEnabled(False)
+          self.dlg.spin_m.setEnabled(False)
+          self.dlg.spin_j.setEnabled(False)
     def cleartif(self):
       self.dlg.box_tif.clear()	
-	
+      self.dlg.spin_an.setEnabled(True)
+      self.dlg.spin_m.setEnabled(True)
+      self.dlg.spin_j.setEnabled(True)
     def select_output_file(self): 
      outputDir = QFileDialog(None, "Select output Directory")
      outputDir.setFileMode(QFileDialog.Directory)
@@ -356,10 +360,8 @@ class BioSIMplugin:
       print "fin"
       self.dlg.progressBar.setValue(100)
     #  QgsProject.instance().clear()
-      self.dlg.progressBar.setValue(0)
      # self.dlg.box_csv.clear()
-      self.dlg.box_tif.clear()
-	  
+     	  
     def execute (self):
       csv =self.dlg.box_csv.toPlainText() 
       tmp = self.dlg.box_tif.toPlainText()
@@ -370,7 +372,9 @@ class BioSIMplugin:
       tif_ = []
       tif_=tmp.split ('\n')	  
       self.qgis_(csv,tif_,year,month,path)
-	  
+      self.makeAnimatedGif(path,tif_)
+      self.dlg.progressBar.setValue(0)
+      self.dlg.box_tif.clear()
 	  
     def subcsvjour(self,csv,dd,md,df,mf,minute): 
      data = list(reader(open(str(csv), 'rb'), delimiter=","))
@@ -395,7 +399,6 @@ class BioSIMplugin:
          if (int(row[index_-1])== int(md) and int(row[index_])== int(dd) and int(row[index_+1])== int(mf) and int(row[index_+2])== int(df)) :
            out.writerow(row) 
      csvf.close()
-
 	
     def linkcsv(self,Csvf):
       uricsv = "file:///"+Csvf+"?delimiter=%s&xField=%s&yField=%s" % (",","Longitude","Latitude") 
@@ -406,8 +409,7 @@ class BioSIMplugin:
       if not layer.isValid():
          print 'is not good'	 
       return uricsv	  
-	  
-	  
+	    
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H):
     #  self.iface.newProject()
       #QgsProject.instance().read(projimage)
@@ -537,3 +539,13 @@ class BioSIMplugin:
         result = self.dlg1.exec_()
         if result:
             pass
+			
+    def makeAnimatedGif(self,path,names):
+      from images2gif import writeGif
+      from PIL import Image
+      name=self.getdata(names[0])[1:8]
+      os.chdir(path+'/')
+      imgFiles = sorted((fn for fn in os.listdir('.') if fn.endswith('.png')))
+      images = [Image.open(fn) for fn in imgFiles]
+      filename = path+'/'+name+".gif"
+      writeGif(filename, images, duration=0.2)	  
