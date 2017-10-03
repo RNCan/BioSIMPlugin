@@ -236,7 +236,7 @@ class BioSIMplugin:
          if data[i]== '\\':
 	       j=i 
         data = data[j+1:len(data)-len('.tif')]  
-        if len(data)>12:
+        if len(data)>12 and self.dlg.spin_an.isEnabled():
           self.dlg.spin_an.setValue(int(data[0:4]))
           self.dlg.spin_m.setValue(int(data[4:6]))
           self.dlg.spin_j.setValue(int(data[6:8]))
@@ -287,7 +287,8 @@ class BioSIMplugin:
 	   
     def qgis_(self,Csvin,Radarin,year,month,Day,paths):
       #self.iface.newProject()
-      directory =os.path.dirname(paths+'/')  
+      paths=paths+'/'+year+self.addzero(month)+self.addzero(Day)+'png/'
+      directory =os.path.dirname(paths)  
       if  not os.path.exists(directory):
         os.makedirs(directory)
 ##########################
@@ -407,7 +408,7 @@ class BioSIMplugin:
       tif_ = []
       tif_=tmp.split ('\n')	  
       self.qgis_(csv,tif_,year,month,day,path)
-      self.makeAnimatedGif(path)
+      self.makeAnimatedGif(path,'/'+year+self.addzero(month)+self.addzero(day)+'png/')
       self.dlg.progressBar.setValue(0)
       self.cleartif()
 	  
@@ -569,10 +570,10 @@ class BioSIMplugin:
         if result:
             pass
 			
-    def makeAnimatedGif(self,path):
+    def makeAnimatedGif(self,path,exten):
       from images2gif import writeGif
       from PIL import Image
-      os.chdir(path+'/')
+      os.chdir(path+exten)
       imgFiles = sorted((fn for fn in os.listdir('.') if fn.endswith('.png')))
       images = [Image.open(fn) for fn in imgFiles]
       name=imgFiles[0][0:8]
