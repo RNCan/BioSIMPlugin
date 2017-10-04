@@ -284,6 +284,19 @@ class BioSIMplugin:
 	  if len(a)==1:
 	     a='0'+a
 	  return a
+	  
+    def addday(self,d,m):
+      if int(m)==6 and  int(d)==30:
+        d='01'
+        m='07'
+      elif int(d)==31 and int(m)==7:
+        d='01'
+        m='08'
+      else:
+       d=str(int(d)+1)
+      m=self.addzero(m)
+      d=self.addzero(d)	   
+      return m+d
 	   
     def qgis_(self,Csvin,Radarin,year,month,Day,paths):
       #self.iface.newProject()
@@ -324,14 +337,17 @@ class BioSIMplugin:
            day=png_name[6:8]
            hour=png_name[8:10]
            minute=png_name[10:12]
-        else:            
+        else: 
+           print  hour+':'+minute
            if minute=='50':
 		     minute='00'
            else :
 		     minute=str(int(minute)+10)
            if minute=='00':
              if hour=='23':
-               day =str(int(day)+1)
+               d=self.addday(day,months)
+               day=d[2:4]
+               months=d[0:2]
                hour='00'
              else :
                hour =str(int(hour)+1)		   
@@ -578,4 +594,5 @@ class BioSIMplugin:
       images = [Image.open(fn) for fn in imgFiles]
       name=imgFiles[0][0:8]
       filename = path+'/'+name+".gif"
-      writeGif(filename, images, duration=0.2)	  
+      writeGif(filename, images, duration=0.2)	
+      os.chdir(path)	  
