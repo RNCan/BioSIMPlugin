@@ -23,7 +23,7 @@
 
 from csv import reader, writer
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon, QFileDialog, QDialog,QFont,QImage,QPainter
+from PyQt4.QtGui import QAction, QIcon, QFileDialog, QDialog,QFont,QImage,QPainter,QMessageBox
 from PyQt4.QtXml import QDomDocument
 from qgis.gui import *
 # Initialize Qt resources from file resources.py
@@ -364,7 +364,7 @@ class BioSIMplugin:
         self.subcsvjour(Csvin,day,months,minute,hour,False)
         i = i+progress
         self.dlg.progressBar.setValue(int(i))
-        if self.dayexiste(folderPath+'/jcsv.csv'):
+        if int(os.path.getsize(folderPath+'/jcsv.csv'))>206:#self.dataexist(folderPath+'/jcsv.csv'):
          uricsv=self.linkcsv(folderPath+'/jcsv.csv')
          layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
          layers[0].loadNamedStyle(style)                    
@@ -412,7 +412,7 @@ class BioSIMplugin:
           QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
          QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())   
       self.dlg.progressBar.setValue(100)
-      self.iface.newProject()
+      #self.iface.newProject()
      # self.dlg.box_csv.clear()
      	  
     def execute (self):
@@ -423,13 +423,22 @@ class BioSIMplugin:
       month= str(self.dlg.spin_m.value())
       day=str(self.dlg.spin_j.value())
       tif_ = []
-      tif_=tmp.split ('\n')	  
-      self.qgis_(csv,tif_,year,month,day,path)
-      self.makeAnimatedGif(path,'/'+year+self.addzero(month)+self.addzero(day)+'png/')
+      tif_=tmp.split ('\n')	
+      #print str(os.path.getsize(folderPath+'/jcsv.csv'))+'  '+str(os.path.getsize(csv))
+      if self.dayexist(csv,day,month):
+       self.qgis_(csv,tif_,year,month,day,path)
+      # self.makeAnimatedGif(path,'/'+year+self.addzero(month)+self.addzero(day)+'png/')
+      else :
+       msgBox = QMessageBox()
+       msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
+       msgBox.exec_()
       self.dlg.progressBar.setValue(0)
       self.cleartif()
 	  
-    def dayexiste(self,csv):
+	  
+ 
+	 
+    def dataexist(self,csv):
       file=open(str(csv), 'rb')
       data = list(reader(file, delimiter=","))
       rownum = 0
@@ -446,6 +455,27 @@ class BioSIMplugin:
        else :		  
 	     if int(row[index_])== 3 or int(row[index_])==4:
 		   test=True
+      file.close()
+      return test  
+	  
+    def dayexist(self,csv,day,m):
+      file=open(str(csv), 'rb')
+      data = list(reader(file, delimiter=","))
+      rownum = 0
+      index_=-999
+      test=False
+      for row in data:
+       if rownum==0:
+        header =row
+        rownum=1
+        for col in range(0,len(row)):   
+         if header[col]=='Day':  
+          index_=col 
+          break	
+       else :		  
+	     if int(row[index_])==int(day) and int(row[index_-1])== int(m):
+		   test=True
+		   break
       file.close()
       return test	
 	  
