@@ -299,7 +299,7 @@ class BioSIMplugin:
       return m+d
 	   
     def qgis_(self,Csvin,Radarin,year,month,Day,paths):
-      #self.iface.newProject()
+      QgsProject.instance().clear()	
       paths=paths+'/'+year+self.addzero(month)+self.addzero(Day)+'png/'
       directory =os.path.dirname(paths)  
       if  not os.path.exists(directory):
@@ -320,11 +320,11 @@ class BioSIMplugin:
 
       End=len(Radarin)
       if len(self.dlg.box_tif.toPlainText())==0:
-	    End=67
+	    End=85
       months=month
       day=Day
-      minute='20'
-      hour='18'
+      minute='00'
+      hour='17'
       months=month
       day=Day
       progress=100/(End* 1.0)
@@ -360,56 +360,57 @@ class BioSIMplugin:
 ##########################################################	
         style=folderPath+'Style/newcsv.qml'
         if self.dlg.symbole_Box.currentText()=='petit':
-          style=folderPath+'Style/csv.qml' 
+          style=folderPath+'Style/csv1.qml' 
         self.subcsvjour(Csvin,day,months,minute,hour,False)
-        uricsv=self.linkcsv(folderPath+'/jcsv.csv')
-        layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
-        layers[0].loadNamedStyle(style)                    
-        layers[0].triggerRepaint()                                                                                       	   
-##################  add tif file  #######################   
-        if End== len(Radarin):
-          layers[1]=QgsRasterLayer(Radarin[index_], hour+':'+minute)
-          QgsMapLayerRegistry.instance().addMapLayer(layers[1])
-        layers[0].setSubsetString('("Year"='+year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')	
-        QgsMapLayerRegistry.instance().addMapLayer(layers[0])
-#####################################################
         i = i+progress
         self.dlg.progressBar.setValue(int(i))
-       # print hour+':'+minute
-        QgsProject.instance().write(projanimation)
+        if self.dayexiste(folderPath+'/jcsv.csv'):
+         uricsv=self.linkcsv(folderPath+'/jcsv.csv')
+         layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
+         layers[0].loadNamedStyle(style)                    
+         layers[0].triggerRepaint()                                                                                       	   
+##################  add tif file  #######################   
+         if End== len(Radarin):
+           layers[1]=QgsRasterLayer(Radarin[index_], hour+':'+minute)
+           QgsMapLayerRegistry.instance().addMapLayer(layers[1])
+         layers[0].setSubsetString('("Year"='+year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')	
+         QgsMapLayerRegistry.instance().addMapLayer(layers[0])
+#####################################################         
+         print hour+':'+minute
+         QgsProject.instance().write(projanimation)
 #####################image ######################### 
-        canvas = self.iface.mapCanvas()
-        QgsProject.instance().read(projanimation)
-        bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
-        bridge.setCanvasLayers()
-        composition = QgsComposition(canvas.mapSettings())
-        composerAsDocument = QDomDocument()
-        composerAsDocument.setContent(QFile(folderPath+'animation.qpt'))
-        composition.loadFromTemplate(composerAsDocument, {})
-        title = QgsComposerLabel(composition)
-        title.setText(str(year+'/'+months+'/'+day+' '+hour+':'+minute+'(GMT -4)'))
-        title.setFont(QFont("Cambria",15, QFont.Bold))
-        title.setItemPosition(228,5.2)
-        title.adjustSizeToText()  
-        composition.addItem(title)
-        Legend = QgsComposerPicture(composition)
-        Legend.setPictureFile(folderPath+'/Style/Legend1.png')
-        Legend.setSceneRect(QRectF(0,0,40,40)) 
-        composition.addItem(Legend)		
-        dpmm = 300 / 25.4
-        width = int(dpmm * composition.paperWidth())
-        height = int(dpmm * composition.paperHeight())
-        image = QImage(QSize(width, height), QImage.Format_ARGB32)
-        image.setDotsPerMeterX(dpmm * 1000)
-        image.setDotsPerMeterY(dpmm * 1000)
-        image.fill(0)
-        imagePainter = QPainter(image)
-        composition.renderPage( imagePainter, 0 )
-        imagePainter.end()
-        image.save(imagePath, "png")
-        if End== len(Radarin):
-         QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
-        QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())   
+         canvas = self.iface.mapCanvas()
+         QgsProject.instance().read(projanimation)
+         bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
+         bridge.setCanvasLayers()
+         composition = QgsComposition(canvas.mapSettings())
+         composerAsDocument = QDomDocument()
+         composerAsDocument.setContent(QFile(folderPath+'animation.qpt'))
+         composition.loadFromTemplate(composerAsDocument, {})
+         title = QgsComposerLabel(composition)
+         title.setText(str(year+'/'+months+'/'+day+' '+hour+':'+minute+'(GMT -4)'))
+         title.setFont(QFont("Cambria",15, QFont.Bold))
+         title.setItemPosition(228,5.2)
+         title.adjustSizeToText()  
+         composition.addItem(title)
+         Legend = QgsComposerPicture(composition)
+         Legend.setPictureFile(folderPath+'/Style/Legend1.png')
+         Legend.setSceneRect(QRectF(0,0,40,40)) 
+         composition.addItem(Legend)		
+         dpmm = 300 / 25.4
+         width = int(dpmm * composition.paperWidth())
+         height = int(dpmm * composition.paperHeight())
+         image = QImage(QSize(width, height), QImage.Format_ARGB32)
+         image.setDotsPerMeterX(dpmm * 1000)
+         image.setDotsPerMeterY(dpmm * 1000)
+         image.fill(0)
+         imagePainter = QPainter(image)
+         composition.renderPage( imagePainter, 0 )
+         imagePainter.end()
+         image.save(imagePath, "png")
+         if End== len(Radarin):
+          QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
+         QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())   
       self.dlg.progressBar.setValue(100)
       self.iface.newProject()
      # self.dlg.box_csv.clear()
@@ -427,6 +428,26 @@ class BioSIMplugin:
       self.makeAnimatedGif(path,'/'+year+self.addzero(month)+self.addzero(day)+'png/')
       self.dlg.progressBar.setValue(0)
       self.cleartif()
+	  
+    def dayexiste(self,csv):
+      file=open(str(csv), 'rb')
+      data = list(reader(file, delimiter=","))
+      rownum = 0
+      index_=-999
+      test=False
+      for row in data:
+       if rownum==0:
+        header =row
+        rownum=1
+        for col in range(0,len(row)):   
+         if header[col]=='state':  
+          index_=col 
+          break	
+       else :		  
+	     if int(row[index_])== 3 or int(row[index_])==4:
+		   test=True
+      file.close()
+      return test	
 	  
     def subcsvjour(self,csv,dd,md,df,mf,minute): 
      data = list(reader(open(str(csv), 'rb'), delimiter=","))
@@ -463,9 +484,7 @@ class BioSIMplugin:
       return uricsv	  
 	    
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H):
-    #  self.iface.newProject()
-      #QgsProject.instance().read(projimage)
-      #QgsProject.instance().clear()	  
+      QgsProject.instance().clear()	  
       directory =os.path.dirname(paths+'/')  
       if  not os.path.exists(directory):
         os.makedirs(directory)
