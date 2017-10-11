@@ -311,24 +311,26 @@ class BioSIMplugin:
 #################  add csv file  ############################  
       layers[2] = QgsVectorLayer(ameriquenord, "maps", "ogr")
       layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
-     # layers[2].triggerRepaint() 
+      layers[2].triggerRepaint() 
      # layers[3] = QgsVectorLayer(QCmaps, "quebec", "ogr")
      # layers[3].loadNamedStyle(folderPath+'Style/layer.qml')                     
      # layers[3].triggerRepaint()  
       QgsMapLayerRegistry.instance().addMapLayer(layers[2])
     #  QgsMapLayerRegistry.instance().addMapLayer(layers[3])
-
-      End=len(Radarin)
-      if len(self.dlg.box_tif.toPlainText())==0:
-	    End=85
       months=month
       day=Day
-      minute='00'
-      hour='17'
+      End=len(Radarin)
+      H=self.gethour(Csvin,day,months)
+      if len(self.dlg.box_tif.toPlainText())==0:
+	    End=6*(30-int(H[0:2]))#85 
+      minute=str(int(H[2:4])-10)#'00'
+      hour=H[0:2]#'17'
       months=month
       day=Day
       progress=100/(End* 1.0)
       i=0
+      print str(End)+'  '+hour+':'+minute
+	  
 ############## boucle principale  ########################
       for index_ in range(0,End):           
         if End== len(Radarin):
@@ -338,7 +340,6 @@ class BioSIMplugin:
            hour=png_name[8:10]
            minute=png_name[10:12]
         else: 
-           print  hour+':'+minute
            if minute=='50':
 		     minute='00'
            else :
@@ -364,7 +365,7 @@ class BioSIMplugin:
         self.subcsvjour(Csvin,day,months,minute,hour,False)
         i = i+progress
         self.dlg.progressBar.setValue(int(i))
-        if int(os.path.getsize(folderPath+'/jcsv.csv'))>206:#self.dataexist(folderPath+'/jcsv.csv'):
+        if self.dataexist(folderPath+'/jcsv.csv'):
          uricsv=self.linkcsv(folderPath+'/jcsv.csv')
          layers[0] = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
          layers[0].loadNamedStyle(style)                    
@@ -377,8 +378,9 @@ class BioSIMplugin:
          QgsMapLayerRegistry.instance().addMapLayer(layers[0])
 #####################################################         
          print hour+':'+minute
-         QgsProject.instance().write(projanimation)
-#####################image ######################### 
+         QgsProject.instance().write(projanimation)		 
+#####################image #########################
+         
          canvas = self.iface.mapCanvas()
          QgsProject.instance().read(projanimation)
          bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
@@ -408,9 +410,12 @@ class BioSIMplugin:
          composition.renderPage( imagePainter, 0 )
          imagePainter.end()
          image.save(imagePath, "png")
+         
          if End== len(Radarin):
           QgsMapLayerRegistry.instance().removeMapLayer(layers[1].id())
-         QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())   
+         QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())  
+        else:
+         break 		
       self.dlg.progressBar.setValue(100)
       #self.iface.newProject()
      # self.dlg.box_csv.clear()
@@ -424,19 +429,38 @@ class BioSIMplugin:
       day=str(self.dlg.spin_j.value())
       tif_ = []
       tif_=tmp.split ('\n')	
-      #print str(os.path.getsize(folderPath+'/jcsv.csv'))+'  '+str(os.path.getsize(csv))
-      if self.dayexist(csv,day,month):
+      if self.gethour(csv,day,month):    
        self.qgis_(csv,tif_,year,month,day,path)
-      # self.makeAnimatedGif(path,'/'+year+self.addzero(month)+self.addzero(day)+'png/')
+       self.makeAnimatedGif(path,'/'+year+self.addzero(month)+self.addzero(day)+'png/')
       else :
        msgBox = QMessageBox()
        msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
        msgBox.exec_()
       self.dlg.progressBar.setValue(0)
       self.cleartif()
-	  
-	  
- 
+	  	  
+    def gethour(self,csv,day,m):
+      file=open(str(csv), 'rb')
+      data = list(reader(file, delimiter=","))
+      rownum = 0
+      index_=-999
+      test=False
+      for row in data:
+       if rownum==0:
+        header =row
+        rownum=1
+        for col in range(0,len(row)):   
+         if header[col]=='Day':  
+          index_=col 
+          break	
+       else :		  
+         if int(row[index_])==int(day) and int(row[index_-1])== int(m):
+           if int(row[index_+11])== 3 or int(row[index_+11])==4:
+              if 16<= int(row[index_+1])<=20:
+		       test=self.addzero(row[index_+1])+self.addzero(row[index_+2])
+		       break
+      file.close()
+      return test	
 	 
     def dataexist(self,csv):
       file=open(str(csv), 'rb')
@@ -453,12 +477,15 @@ class BioSIMplugin:
           index_=col 
           break	
        else :		  
-	     if int(row[index_])== 3 or int(row[index_])==4:
-		   test=True
+        if int(row[index_])== 3 or int(row[index_])==4:
+           test=True
+           print 'ok'
+           break
+           
       file.close()
       return test  
 	  
-    def dayexist(self,csv,day,m):
+    '''def dayexist(self,csv,day,m):
       file=open(str(csv), 'rb')
       data = list(reader(file, delimiter=","))
       rownum = 0
@@ -477,7 +504,7 @@ class BioSIMplugin:
 		   test=True
 		   break
       file.close()
-      return test	
+      return test'''	
 	  
     def subcsvjour(self,csv,dd,md,df,mf,minute): 
      data = list(reader(open(str(csv), 'rb'), delimiter=","))
