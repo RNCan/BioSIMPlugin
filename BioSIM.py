@@ -44,7 +44,7 @@ projanimation= QFileInfo(folderPath+'Dispersal.qgs')
 proj=QgsProject.instance() 
 
 class Operationlongue(QtCore.QThread):
-    info = QtCore.pyqtSignal(int)
+    info = QtCore.pyqtSignal(int,int)
     fini = QtCore.pyqtSignal()
     debut = QtCore.pyqtSignal()
     #========================================================================
@@ -53,10 +53,12 @@ class Operationlongue(QtCore.QThread):
         self.n=n		
     #========================================================================
     def run(self):
-      self.debut.emit()  
+      self.debut.emit()
+      j=0	  
       for i in range(0,self.n):
-        time.sleep(0.5)	  
-        self.info.emit(i)		
+        time.sleep(0.5)
+        j+=int(100/(self.n*1.0))	
+        self.info.emit(i,j)		
       self.fini.emit()	
 
 
@@ -377,7 +379,6 @@ class BioSIMplugin:
              self.operationlongue = Operationlongue(self.iface,1)
              self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project_csv)
-            # self.operationlongue.info.connect(self.progression)
              self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
@@ -385,7 +386,8 @@ class BioSIMplugin:
          else :
           self.operationlongue.terminate()	 
 		  
-    def progression(self,i):
+		  
+    def progression(self,i,j):
         path=self.dlg.box_output.toPlainText()	
         tmp=  self.dlg.box_tif.toPlainText() 
         tif_ = []
@@ -393,7 +395,7 @@ class BioSIMplugin:
         data=self.getdata(tif_[i])
         self.settif(tif_[i])
         self.pngout(data,path)
-        self.dlg.progressBar.setValue(i)
+        self.dlg.progressBar.setValue(j)
        # QtCore.QCoreApplication.processEvents()
 	   
     def gethour(self,csv,day,m):
@@ -421,11 +423,9 @@ class BioSIMplugin:
 	  
     def stop(self):
         self.dlg.progressBar.setValue(0)
-        #self.iface.newProject()
-        #import glob
-        #files = glob.glob('D:/test/Image/Im/qgis/*')
-        #for f in files:
-         # os.remove(f)
+        self.iface.newProject()
+        os.remove(folderPath+'/1.qgs')
+		 
     def addcsv(self,data):
         Year=data[0:4]
         months=data[4:6]
@@ -437,8 +437,8 @@ class BioSIMplugin:
         layern.loadNamedStyle(folderPath+'Style/layer.qml')                     
         layern.triggerRepaint()  	  
         QgsMapLayerRegistry.instance().addMapLayer(layern)        
-        imagePath ='D:/test/Image/Im/qgis/1.qgs'       
-        uricsv=self.linkcsv(folderPath+'/csv/'+months+day+'.csv')
+        imagePath =folderPath+'/1.qgs'       
+        uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
         layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
         layercsv.loadNamedStyle(folderPath+'Style/newcsv.qml')                    
         layercsv.triggerRepaint()
@@ -458,16 +458,15 @@ class BioSIMplugin:
         day=png_name[6:8]
         hour=png_name[8:10]
         minute=png_name[10:12]
-        imagePath ='D:/test/Image/Im/qgis/1.qgs'
+        imagePath =folderPath+'/1.qgs'
         layer=QgsRasterLayer(tif, hour+':'+minute)
         QgsMapLayerRegistry.instance().addMapLayer(layer)       
-        uricsv=self.linkcsv(folderPath+'/csv/'+months+day+'.csv')
+        uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
         layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
         layercsv.loadNamedStyle(folderPath+'Style/newcsv.qml')                    
         layercsv.triggerRepaint()
         layercsv.setSubsetString('("Year"='+Year+'AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
-        QgsMapLayerRegistry.instance().addMapLayer(layercsv)
-		
+        QgsMapLayerRegistry.instance().addMapLayer(layercsv)		
         QgsProject.instance().write(QFileInfo(imagePath))
         
     def pngout(self,data,paths):
@@ -480,7 +479,7 @@ class BioSIMplugin:
         day=png_name[6:8]
         hour=png_name[8:10]
         minute=png_name[10:12]
-        imagePath ='D:/test/Image/Im/qgis/1.qgs'
+        imagePath =folderPath+'/1.qgs'
         canvas = self.iface.mapCanvas()
         QgsProject.instance().read(QFileInfo(imagePath))
         bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
@@ -517,7 +516,7 @@ class BioSIMplugin:
      if minute:
 	    csvf=open(folderPath+'/data.csv', 'wb')
      else:
-        csvf=open(folderPath+'/csv/'+md+dd+'.csv', 'wb')
+        csvf=open(folderPath+'/'+md+dd+'.csv', 'wb')
      out = writer(csvf, delimiter=',' , lineterminator='\n')
      rownum = 0
      index_=-999
