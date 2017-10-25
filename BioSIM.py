@@ -422,9 +422,12 @@ class BioSIMplugin:
       return test	
 	  
     def stop(self):
+        path=self.dlg.box_output.toPlainText()
+        self.makeAnimatedGif(path)
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
         os.remove(folderPath+'/1.qgs')
+        os.remove(folderPath+'/1.qgs~')
 		 
     def addcsv(self,data):
         Year=data[0:4]
@@ -683,4 +686,13 @@ class BioSIMplugin:
         if result:
             pass
 			
-	  
+    def makeAnimatedGif(self,path):
+      from images2gif import writeGif
+      from PIL import Image
+      os.chdir(path)
+      imgFiles = sorted((fn for fn in os.listdir('.') if fn.endswith('.png')))
+      images = [Image.open(fn) for fn in imgFiles]
+      name=imgFiles[0][0:8]
+      filename = path+'/'+name[0:4]+'-'+name[4:6]+'-'+name[6:8]+".gif"
+      writeGif(filename, images, duration=0.2)	
+      os.chdir(path)		
