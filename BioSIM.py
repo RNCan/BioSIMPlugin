@@ -47,6 +47,7 @@ class Operationlongue(QtCore.QThread):
     info = QtCore.pyqtSignal(int,int)
     fini = QtCore.pyqtSignal()
     debut = QtCore.pyqtSignal()
+    tt = QtCore.pyqtSignal()
     #========================================================================
     def __init__(self, parent ,n):
         super(Operationlongue, self).__init__(parent)
@@ -58,7 +59,8 @@ class Operationlongue(QtCore.QThread):
       for i in range(0,self.n):
         time.sleep(0.5)
         j+=int(100/(self.n*1.0))	
-        self.info.emit(i,j)		
+        self.info.emit(i,j)
+        self.tt.emit()		
       self.fini.emit()	
 
 
@@ -330,38 +332,28 @@ class BioSIMplugin:
         Csvin=folderPath+'data.csv'
         self.subcsvjour(Csvin,day,months,minute,hour,False)
      
-    def open_project_csv(self): 
+    def open_project_csv(self,i,j): 
        path=self.dlg.box_output.toPlainText()		
-       Csvin=folderPath+'data.csv'
+       Csvin=folderPath+'data.csv'  
        year=str(self.dlg.spin_an.value())
        months=str(self.dlg.spin_m.value())
-       day=str(self.dlg.spin_j.value())
-       geth=self.gethour(Csvin,day,months)
-       minute=str(int(geth[2:4])-10)#'00'
-       hour=geth[0:2]
-       End=6*(30-int(geth[0:2]))#85
-       for j in range(0,20):
-        if minute=='50':
-		     minute='00'
-        else :
-		     minute=str(int(minute)+10)
-        if minute=='00':
-             if hour=='23':
-               d=self.addday(day,months)
-               day=d[2:4]
-               months=d[0:2]
-               hour='00'
-             else :
-               hour =str(int(hour)+1)	   
-        months=self.addzero(months)
-        day=self.addzero(day)
-        hour=self.addzero(hour)
-        self.subcsvjour(Csvin,day,months,minute,hour,False)        
-        data=year+months+day+hour+minute
-        self.addcsv(data)
-        self.pngout(data,path)
-        self.dlg.progressBar.setValue(j)
-	   
+       day=self.dlg.spin_j.value()
+       geth=self.gethour(folderPath+'data.csv',day,months)
+       minute=int(geth[2:4])+(i*10)#'00'
+       hour=int(geth[0:2])+minute/60
+       day+=hour/24
+       hour%=24
+       minute%=60
+       day=self.addzero(day)
+       months=self.addzero(months)
+       hour=self.addzero(hour)
+       minute=self.addzero(minute)
+       self.subcsvjour(Csvin,day,months,minute,hour,False)        
+       data=year+months+day+hour+minute
+       self.addcsv(data)
+       self.pngout(data,path)	
+       self.dlg.progressBar.setValue(j)
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     def lancement(self):
          tmp=  self.dlg.box_tif.toPlainText()
          tif_ = []
@@ -375,8 +367,8 @@ class BioSIMplugin:
              self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
-           else:
-             self.operationlongue = Operationlongue(self.iface,1)
+           else:            
+             self.operationlongue = Operationlongue(self.iface,80)#End
              self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project_csv)
              self.operationlongue.fini.connect(self.stop)
