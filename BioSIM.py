@@ -314,10 +314,16 @@ class BioSIMplugin:
       return uricsv		
 	  
     def open_csv(self):
-        Csvin=self.dlg.box_csv.toPlainText() 
+        Csvin=self.dlg.box_csv.toPlainText()
+        year=str(self.dlg.spin_an.value())		
         months=str(self.dlg.spin_m.value())
         day=str(self.dlg.spin_j.value())
+        path=self.dlg.box_output.toPlainText()
+        imagePath=path+'/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)+'/'
         self.subcsvjour(Csvin,day,months,str(int(day)+1),months,True)
+        directory =os.path.dirname(imagePath)  
+        if  not os.path.exists(directory):
+          os.makedirs(directory)
 		
     def open_project(self,i):
         tmp=  self.dlg.box_tif.toPlainText()
@@ -415,7 +421,11 @@ class BioSIMplugin:
 	  
     def stop(self):
         path=self.dlg.box_output.toPlainText()
-        self.makeAnimatedGif(path)
+        year=str(self.dlg.spin_an.value())
+        months=str(self.dlg.spin_m.value())
+        day=self.dlg.spin_j.value()
+        extra='/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)
+        self.makeAnimatedGif(path,extra)
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
         os.remove(folderPath+'/1.qgs')
@@ -465,9 +475,6 @@ class BioSIMplugin:
         QgsProject.instance().write(QFileInfo(imagePath))
         
     def pngout(self,data,paths):
-        directory =os.path.dirname(paths+'/')  
-        if  not os.path.exists(directory):
-          os.makedirs(directory)
         png_name=data
         Year=png_name[0:4]
         months=png_name[4:6]
@@ -478,7 +485,7 @@ class BioSIMplugin:
         canvas = self.iface.mapCanvas()
         QgsProject.instance().read(QFileInfo(imagePath))
         bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
-        imagePath =paths+'/'+png_name+'.png'
+        imagePath =paths+'/'+Year+'-'+months+'-'+day+'/'+png_name+'.png' 
         bridge.setCanvasLayers()
         composition = QgsComposition(canvas.mapSettings())
         composerAsDocument = QDomDocument()
@@ -678,10 +685,10 @@ class BioSIMplugin:
         if result:
             pass
 			
-    def makeAnimatedGif(self,path):
+    def makeAnimatedGif(self,path,extra):
       from images2gif import writeGif
       from PIL import Image
-      os.chdir(path)
+      os.chdir(path+extra)
       imgFiles = sorted((fn for fn in os.listdir('.') if fn.endswith('.png')))
       images = [Image.open(fn) for fn in imgFiles]
       name=imgFiles[0][0:8]
