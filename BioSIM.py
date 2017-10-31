@@ -225,6 +225,7 @@ class BioSIMplugin:
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
         path= QFileDialog.getOpenFileName(self.dlg, "Open cvs file",lastpath,"CSV files (*.csv)")
+        self.dlg.ok_button.setEnabled(True)
         if path:
           settings.setValue("LASTPATH", os.path.dirname(path))
           self.dlg.box_csv.setText(path)
@@ -235,6 +236,7 @@ class BioSIMplugin:
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
         path= QFileDialog.getOpenFileName(self.dlg1, "Open cvs file",lastpath,"CSV files (*.csv)")
+        
         if path:
           settings.setValue("LASTPATH", os.path.dirname(path))
           self.dlg1.box_csv.setText(path)
@@ -268,6 +270,7 @@ class BioSIMplugin:
       self.dlg.spin_an.setEnabled(True)
       self.dlg.spin_m.setEnabled(True)
       self.dlg.spin_j.setEnabled(True)
+     # self.dlg.ok_button.setEnabled(False)
 	  
     def addday(self,d,m):
       if int(m)==6 and  int(d)==30:
@@ -353,51 +356,60 @@ class BioSIMplugin:
        months=str(self.dlg.spin_m.value())
        day=self.dlg.spin_j.value()
        Path=path+'/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)
-       geth=self.gethour(folderPath+'data.csv',day,months)
-       minute=int(geth[2:4])+(i*10)#'00'
-       hour=int(23)+minute/60
-       day+=hour/24
-       hour%=24
-       minute%=60
-       if int(months)==6 and  int(day)==31:
-        day='01'
-        months='07'
-       elif int(months)==7 and int(day)==32 :
-        day='01'
-        months='08'
-       day=self.addzero(day)
-       months=self.addzero(months)
-       hour=self.addzero(hour)
-       minute=self.addzero(minute)
-       self.subcsvjour(Csvin,day,months,minute,hour,False)        
-       data=year+months+day+hour+minute
-       self.addcsv(data)
-       self.pngout(data,Path)	
-       self.dlg.progressBar.setValue(j)
+       geth=self.gethour(Csvin,day,months)
+       if geth:
+        minute=int(geth[2:4])+(i*10)#'00'
+        hour=int(geth[0:2])+minute/60
+        day+=hour/24
+        hour%=24
+        minute%=60
+        if int(months)==6 and  int(day)==31:
+         day='01'
+         months='07'
+        elif int(months)==7 and int(day)==32 :
+         day='01'
+         months='08'
+        day=self.addzero(day)
+        months=self.addzero(months)
+        hour=self.addzero(hour)
+        minute=self.addzero(minute)
+        self.subcsvjour(Csvin,day,months,minute,hour,False)        
+        data=year+months+day+hour+minute
+        #self.addcsv(data)
+        #self.pngout(data,Path)	
+        self.dlg.progressBar.setValue(j)
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     def lancement(self):
+       self.open_csv()
+       months=str(self.dlg.spin_m.value())
+       day=self.dlg.spin_j.value()
+       if self.gethour(folderPath+'data.csv',day,months):
          tmp=  self.dlg.box_tif.toPlainText()
          tif_ = []
          tif_=tmp.split ('\n')
-         if self.operationlongue==None or not self.operationlongue.isRunning()  : 
+         if self.operationlongue==None or not self.operationlongue.isRunning(): 
            if len(self.dlg.box_tif.toPlainText())!=0:	 
              self.operationlongue = Operationlongue(self.iface,len(tif_))
              self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project)
              self.operationlongue.info.connect(self.progression)
-            # self.operationlongue.fini.connect(self.stop)
+             self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
            else:            
-             self.operationlongue = Operationlongue(self.iface,30)
+             self.operationlongue = Operationlongue(self.iface,68)
              self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project_csv)
-            # self.operationlongue.fini.connect(self.stop)
-           #  self.operationlongue.fini.connect(self.cleartif)
-             self.operationlongue.start()
-   
+             self.operationlongue.fini.connect(self.stop)
+             self.operationlongue.fini.connect(self.cleartif)
+             self.operationlongue.start()   
          else :
-          self.operationlongue.terminate()	 
+          self.operationlongue.terminate()	
+       else :
+        msgBox = QMessageBox()
+        msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
+        msgBox.exec_()
+        self.cleartif()		  
 		  		  
     def progression(self,i,j):
         path=self.dlg.box_output.toPlainText()
@@ -448,6 +460,7 @@ class BioSIMplugin:
         self.iface.newProject()
         os.remove(folderPath+'/1.qgs')
         os.remove(folderPath+'/1.qgs~')
+        #self.dlg.ok_button.setEnabled(False)
 		 
     def addcsv(self,data):
         Year=data[0:4]

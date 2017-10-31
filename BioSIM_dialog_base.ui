@@ -194,6 +194,9 @@ p, li { white-space: pre-wrap; }
    </property>
   </widget>
   <widget class="QPushButton" name="ok_button">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>310</x>
