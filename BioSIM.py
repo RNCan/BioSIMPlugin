@@ -47,11 +47,11 @@ class Operationlongue(QtCore.QThread):
     info = QtCore.pyqtSignal(int,int)
     fini = QtCore.pyqtSignal()
     debut = QtCore.pyqtSignal()
-    tt = QtCore.pyqtSignal()
     #========================================================================
     def __init__(self, parent ,n):
         super(Operationlongue, self).__init__(parent)
-        self.n=n		
+        self.n=n
+	
     #========================================================================
     def run(self):
       self.debut.emit()
@@ -59,8 +59,7 @@ class Operationlongue(QtCore.QThread):
       for i in range(0,self.n):
         time.sleep(0.5)
         j+=int(100/(self.n*1.0))	
-        self.info.emit(i,j)
-        self.tt.emit()		
+        self.info.emit(i,j)		
       self.fini.emit()	
 
 
@@ -263,7 +262,7 @@ class BioSIMplugin:
           self.dlg.spin_m.setEnabled(False)
           self.dlg.spin_j.setEnabled(False)
     #QgsProject.instance().read(projanimation)
-		  
+	
     def cleartif(self):
       self.dlg.box_tif.clear()	
       self.dlg.spin_an.setEnabled(True)
@@ -320,7 +319,16 @@ class BioSIMplugin:
         day=str(self.dlg.spin_j.value())
         path=self.dlg.box_output.toPlainText()
         imagePath=path+'/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)+'/'
-        self.subcsvjour(Csvin,day,months,str(int(day)+1),months,True)
+        if int(months)==6 and  int(day)==30:
+         fday='01'
+         fmonths='07'
+        elif int(months)==7 and int(day)==31 :
+          fday='01'
+          fmonths='08'
+        else:
+          fday=str(int(day)+1)
+          fmonths=months
+        self.subcsvjour(Csvin,day,months,fday,fmonths,True)
         directory =os.path.dirname(imagePath)  
         if  not os.path.exists(directory):
           os.makedirs(directory)
@@ -344,12 +352,19 @@ class BioSIMplugin:
        year=str(self.dlg.spin_an.value())
        months=str(self.dlg.spin_m.value())
        day=self.dlg.spin_j.value()
+       Path=path+'/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)
        geth=self.gethour(folderPath+'data.csv',day,months)
        minute=int(geth[2:4])+(i*10)#'00'
-       hour=int(geth[0:2])+minute/60
+       hour=int(23)+minute/60
        day+=hour/24
        hour%=24
        minute%=60
+       if int(months)==6 and  int(day)==31:
+        day='01'
+        months='07'
+       elif int(months)==7 and int(day)==32 :
+        day='01'
+        months='08'
        day=self.addzero(day)
        months=self.addzero(months)
        hour=self.addzero(hour)
@@ -357,7 +372,7 @@ class BioSIMplugin:
        self.subcsvjour(Csvin,day,months,minute,hour,False)        
        data=year+months+day+hour+minute
        self.addcsv(data)
-       self.pngout(data,path)	
+       self.pngout(data,Path)	
        self.dlg.progressBar.setValue(j)
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     def lancement(self):
@@ -370,31 +385,34 @@ class BioSIMplugin:
              self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project)
              self.operationlongue.info.connect(self.progression)
-             self.operationlongue.fini.connect(self.stop)
+            # self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
            else:            
-             self.operationlongue = Operationlongue(self.iface,80)#End
+             self.operationlongue = Operationlongue(self.iface,30)
              self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project_csv)
-             self.operationlongue.fini.connect(self.stop)
-             self.operationlongue.fini.connect(self.cleartif)
+            # self.operationlongue.fini.connect(self.stop)
+           #  self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
-            		   
+   
          else :
           self.operationlongue.terminate()	 
-		  
-		  
+		  		  
     def progression(self,i,j):
-        path=self.dlg.box_output.toPlainText()	
+        path=self.dlg.box_output.toPlainText()
+        year=str(self.dlg.spin_an.value())		
+        months=str(self.dlg.spin_m.value())
+        day=str(self.dlg.spin_j.value())
+        Path=path+'/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)		
         tmp=  self.dlg.box_tif.toPlainText() 
         tif_ = []
         tif_=tmp.split ('\n')
         data=self.getdata(tif_[i])
         self.settif(tif_[i])
-        self.pngout(data,path)
+        self.pngout(data,Path)
         self.dlg.progressBar.setValue(j)
-       # QtCore.QCoreApplication.processEvents()
+       # QtCore.QCoreApplication.processEvents()	
 	   
     def gethour(self,csv,day,m):
       file=open(str(csv), 'rb')
@@ -485,7 +503,7 @@ class BioSIMplugin:
         canvas = self.iface.mapCanvas()
         QgsProject.instance().read(QFileInfo(imagePath))
         bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
-        imagePath =paths+'/'+Year+'-'+months+'-'+day+'/'+png_name+'.png' 
+        imagePath =paths+'/'+png_name+'.png' 
         bridge.setCanvasLayers()
         composition = QgsComposition(canvas.mapSettings())
         composerAsDocument = QDomDocument()
