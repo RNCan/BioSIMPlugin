@@ -187,7 +187,7 @@ p, li { white-space: pre-wrap; }
   </widget>
   <widget class="QSpinBox" name="spin_an">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>

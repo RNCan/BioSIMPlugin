@@ -102,8 +102,11 @@ class BioSIMplugin:
       #  self.dlg.ok_button.clicked.connect(self.execute)
         self.dlg.ok_button.clicked.connect(self.lancement)
         self.dlg1.run_button.clicked.connect(self.executeimage)
-        self.operationlongue = None
-
+        self.operationlongue = None        
+        self.timer = QtCore.QTimer(self.iface)
+        self.timer.setInterval(1000 * 60 * 60)
+        self.timer.timeout.connect(self.displaydate)
+        self.timer.start()
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -231,6 +234,15 @@ class BioSIMplugin:
           self.dlg.box_csv.setText(path)
           if  not self.dlg.box_output.toPlainText():
             self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
+   
+    def displaydate(self):
+      import time
+      self.dlg1.spin_an.setValue(int(time.strftime("%Y")))
+      self.dlg1.spin_m.setValue(int(time.strftime("%m")))
+      self.dlg1.spin_m1.setValue(int(time.strftime("%m")))
+      self.dlg1.spin_j.setValue(int(time.strftime("%d"))-1)
+      self.dlg1.spin_j1.setValue(int(time.strftime("%d")))
+
   
     def select_csv_file1(self): 
         settings = QSettings("Company name", "Application name")
@@ -375,8 +387,8 @@ class BioSIMplugin:
         minute=self.addzero(minute)
         self.subcsvjour(Csvin,day,months,minute,hour,False)        
         data=year+months+day+hour+minute
-        #self.addcsv(data)
-        #self.pngout(data,Path)	
+        self.addcsv(data)
+        self.pngout(data,Path)	
         self.dlg.progressBar.setValue(j)
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     def lancement(self):
@@ -390,7 +402,7 @@ class BioSIMplugin:
          if self.operationlongue==None or not self.operationlongue.isRunning(): 
            if len(self.dlg.box_tif.toPlainText())!=0:	 
              self.operationlongue = Operationlongue(self.iface,len(tif_))
-             self.operationlongue.debut.connect(self.open_csv)
+           #  self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project)
              self.operationlongue.info.connect(self.progression)
              self.operationlongue.fini.connect(self.stop)
@@ -398,7 +410,7 @@ class BioSIMplugin:
              self.operationlongue.start()
            else:            
              self.operationlongue = Operationlongue(self.iface,68)
-             self.operationlongue.debut.connect(self.open_csv)
+           #  self.operationlongue.debut.connect(self.open_csv)
              self.operationlongue.info.connect(self.open_project_csv)
              self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
@@ -475,8 +487,11 @@ class BioSIMplugin:
         QgsMapLayerRegistry.instance().addMapLayer(layern)        
         imagePath =folderPath+'/1.qgs'       
         uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
-        layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
-        layercsv.loadNamedStyle(folderPath+'Style/newcsv.qml')                    
+        layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")
+        style=folderPath+'Style/newcsv.qml'
+        if self.dlg.symbole_Box.currentText()=='petit':
+          style=folderPath+'Style/csv1.qml' 		
+        layercsv.loadNamedStyle(style)  		                  
         layercsv.triggerRepaint()
         layercsv.setSubsetString('("Year"=2017 AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)
@@ -498,8 +513,11 @@ class BioSIMplugin:
         layer=QgsRasterLayer(tif, hour+':'+minute)
         QgsMapLayerRegistry.instance().addMapLayer(layer)       
         uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
-        layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 		
-        layercsv.loadNamedStyle(folderPath+'Style/newcsv.qml')                    
+        layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 
+        style=folderPath+'Style/newcsv.qml'
+        if self.dlg.symbole_Box.currentText()=='petit':
+          style=folderPath+'Style/csv1.qml' 		
+        layercsv.loadNamedStyle(style)                    
         layercsv.triggerRepaint()
         layercsv.setSubsetString('("Year"='+Year+'AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)		
@@ -642,13 +660,13 @@ class BioSIMplugin:
        else:
 		j=str(dj)
        imagePath = paths+'/'+year+months+j+'.png' 
-       self.subcsvjour(Csvin,str(dj),dm,str(fj),fm,True)
-       uricsv=self.linkcsv(folderPath+'data.csv')
+       #self.subcsvjour(Csvin,str(dj),dm,str(fj),fm,True)
+       uricsv=self.linkcsv(Csvin)
        layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
        layers[0].loadNamedStyle(folderPath+'Style/csv.qml')                    
        layers[0].triggerRepaint()
        QgsMapLayerRegistry.instance().addMapLayer(layers[0])
-       layers[0].setSubsetString('("Year"='+year+'AND "Month"='+dm+' AND "Day"='+str(dj)+' AND "Hour">'+H+')  OR  ("Year"='+year+'AND "Month"='+fm+' AND "Day"='+str(fj)+' AND "Hour"<'+H+')' )
+       layers[0].setSubsetString('("Year"='+year+' AND "Month"='+dm+' AND "Day"='+str(dj)+' AND "Hour">'+H+')  OR  ("Year"='+year+' AND "Month"='+fm+' AND "Day"='+str(fj)+' AND "Hour"<'+H+')' )
        QgsProject.instance().write(projanimation)
 #####################image ######################### 
        canvas = self.iface.mapCanvas()
@@ -713,8 +731,8 @@ class BioSIMplugin:
         """Run method that performs all the real work"""	
         self.dlg1.show()
         result = self.dlg1.exec_()
-        if result:
-            pass
+        if result:          
+           pass
 			
     def makeAnimatedGif(self,path,extra):
       from images2gif import writeGif
