@@ -99,14 +99,15 @@ class BioSIMplugin:
         self.dlg.output_button.clicked.connect(self.select_output_file)
         self.dlg1.box_output.clear()
         self.dlg1.output_button.clicked.connect(self.select_output_file1)
-      #  self.dlg.ok_button.clicked.connect(self.execute)
         self.dlg.ok_button.clicked.connect(self.lancement)
         self.dlg1.run_button.clicked.connect(self.executeimage)
-        self.operationlongue = None        
+        self.operationlongue = None
+        self.displaydate()        
         self.timer = QtCore.QTimer(self.iface)
-        self.timer.setInterval(1000 * 60 * 60)
+        self.timer.setInterval( 60000*60*10 )
         self.timer.timeout.connect(self.displaydate)
         self.timer.start()
+		
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -242,8 +243,7 @@ class BioSIMplugin:
       self.dlg1.spin_m1.setValue(int(time.strftime("%m")))
       self.dlg1.spin_j.setValue(int(time.strftime("%d"))-1)
       self.dlg1.spin_j1.setValue(int(time.strftime("%d")))
-
-  
+ 
     def select_csv_file1(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
@@ -275,14 +275,12 @@ class BioSIMplugin:
           self.dlg.spin_an.setEnabled(False)
           self.dlg.spin_m.setEnabled(False)
           self.dlg.spin_j.setEnabled(False)
-    #QgsProject.instance().read(projanimation)
 	
     def cleartif(self):
       self.dlg.box_tif.clear()	
       self.dlg.spin_an.setEnabled(True)
       self.dlg.spin_m.setEnabled(True)
       self.dlg.spin_j.setEnabled(True)
-     # self.dlg.ok_button.setEnabled(False)
 	  
     def addday(self,d,m):
       if int(m)==6 and  int(d)==30:
@@ -462,6 +460,7 @@ class BioSIMplugin:
       return test	
 	  
     def stop(self):
+        self.dlg.progressBar.setValue(98)
         path=self.dlg.box_output.toPlainText()
         year=str(self.dlg.spin_an.value())
         months=str(self.dlg.spin_m.value())
@@ -472,7 +471,6 @@ class BioSIMplugin:
         self.iface.newProject()
         os.remove(folderPath+'/1.qgs')
         os.remove(folderPath+'/1.qgs~')
-        #self.dlg.ok_button.setEnabled(False)
 		 
     def addcsv(self,data):
         Year=data[0:4]
@@ -493,7 +491,7 @@ class BioSIMplugin:
           style=folderPath+'Style/csv1.qml' 		
         layercsv.loadNamedStyle(style)  		                  
         layercsv.triggerRepaint()
-        layercsv.setSubsetString('("Year"=2017 AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
+        layercsv.setSubsetString('("Year"='+Year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)
         QgsProject.instance().write(QFileInfo(imagePath))
 
@@ -519,7 +517,7 @@ class BioSIMplugin:
           style=folderPath+'Style/csv1.qml' 		
         layercsv.loadNamedStyle(style)                    
         layercsv.triggerRepaint()
-        layercsv.setSubsetString('("Year"='+Year+'AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
+        layercsv.setSubsetString('("Year"='+Year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)		
         QgsProject.instance().write(QFileInfo(imagePath))
         
@@ -603,105 +601,100 @@ class BioSIMplugin:
       data = data[j+1:len(data)-len('.tif')]  
       if len(data)>12:
        return data [0:12]  	  
-
-    def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H):
+    
+    def csv_image(self):
+      Csvin =self.dlg1.box_csv.toPlainText() 
+      paths=self.dlg1.box_output.toPlainText()
       QgsProject.instance().clear()	  
       directory =os.path.dirname(paths+'/')  
       if  not os.path.exists(directory):
         os.makedirs(directory)
-##########################
       layers=[]
-      for x in range(0,3):
+      for x in range(0,2):
        layers.append('')
 #################  add csv file  ############################  
-      layers[1] = QgsVectorLayer(ameriquenord, "maps", "ogr")
+      layers[0] = QgsVectorLayer(ameriquenord, "maps", "ogr")
+      layers[0].loadNamedStyle(folderPath+'Style/layer.qml')                     
+      layers[0].triggerRepaint() 
+      layers[1] = QgsVectorLayer(QCmaps, "quebec", "ogr")
       layers[1].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[1].triggerRepaint() 
-      #layers[2] = QgsVectorLayer(QCmaps, "quebec", "ogr")
-      #layers[2].loadNamedStyle(folderPath+'Style/layer.qml')                     
-     # layers[2].triggerRepaint() 
-      QgsMapLayerRegistry.instance().addMapLayer(layers[1])
-     # QgsMapLayerRegistry.instance().addMapLayer(layers[2])
-      delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))
-      progress=100/((delta.days)+1* 1.0)
-      i=0     
-#################################################################################
+      QgsMapLayerRegistry.instance().addMapLayer(layers[0])
+      QgsMapLayerRegistry.instance().addMapLayer(layers[1])	
+	
+    def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H,index):
+    #  delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))    
       fd=0
       if int(Dmonth)!= int(Fmonth):
         if Dmonth=='6':
 		   fd='30'
         else: 
-		   fd='31'
-############################################################################		
-      for index in range (0,delta.days + 1):
-       i = i+progress
-       self.dlg1.progressBar.setValue(int(i))
-       print i
-       if str(int(Dday)+index)>fd and int(Dmonth)!= int(Fmonth):
+		   fd='31'		
+      if str(int(Dday)+index)>fd and int(Dmonth)!= int(Fmonth):
           dm=fm=Fmonth
           dj=int(Dday)+index-int(fd)
           fj=dj+1
-       elif str(int(Dday)+index)==fd and int(Dmonth)!= int(Fmonth):
+      elif str(int(Dday)+index)==fd and int(Dmonth)!= int(Fmonth):
          dm=Dmonth
          fm=Fmonth
          dj=int(Dday)+index
          fj=1
-       else :		 
+      else :		 
          dm=Dmonth
          fm=Dmonth
          dj=int(Dday)+index
          fj=dj+1
-       if len(dm)==1:
+      if len(dm)==1:
 		months='0'+dm
-       else:
-		months=dm
-       if len(str(dj))==1:
-		j='0'+str(dj)
-       else:
+      else:
+	    months=dm
+      if len(str(dj))==1:
+	    j='0'+str(dj)
+      else:
 		j=str(dj)
-       imagePath = paths+'/'+year+months+j+'.png' 
-       #self.subcsvjour(Csvin,str(dj),dm,str(fj),fm,True)
-       uricsv=self.linkcsv(Csvin)
-       layers[0] = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
-       layers[0].loadNamedStyle(folderPath+'Style/csv.qml')                    
-       layers[0].triggerRepaint()
-       QgsMapLayerRegistry.instance().addMapLayer(layers[0])
-       layers[0].setSubsetString('("Year"='+year+' AND "Month"='+dm+' AND "Day"='+str(dj)+' AND "Hour">'+H+')  OR  ("Year"='+year+' AND "Month"='+fm+' AND "Day"='+str(fj)+' AND "Hour"<'+H+')' )
-       QgsProject.instance().write(projanimation)
+      imagePath = paths+'/'+year+months+j+'.png' 
+      self.subcsvjour(Csvin,str(dj),dm,str(fj),fm,True)
+      uricsv=self.linkcsv(folderPath+'/data.csv')
+      layers = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
+      layers.loadNamedStyle(folderPath+'Style/csv.qml')                    
+      layers.triggerRepaint()
+      QgsMapLayerRegistry.instance().addMapLayer(layers)       
+      layers.setSubsetString('("Year"='+year+' AND "Month"='+dm+' AND "Day"='+str(dj)+' AND "Hour">'+H+')  OR  ("Year"='+year+' AND "Month"='+fm+' AND "Day"='+str(fj)+' AND "Hour"<'+H+')' ) 
+      QgsProject.instance().write(projanimation)
 #####################image ######################### 
-       canvas = self.iface.mapCanvas()
-       QgsProject.instance().read(projanimation)
-       bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
-       bridge.setCanvasLayers()
-       composition = QgsComposition(canvas.mapSettings())
-       composerAsDocument = QDomDocument()
-       composerAsDocument.setContent(QFile(folderPath+'image-jour.qpt'))
-       composition.loadFromTemplate(composerAsDocument, {})
-       title = QgsComposerLabel(composition)
-       title.setText(str(year+'/'+months+'/'+j))
-       title.setFont(QFont("Cambria",15, QFont.Bold))
-       title.setItemPosition(248,5.2)
-       title.adjustSizeToText()  
-       composition.addItem(title)
-       Legend = QgsComposerPicture(composition)
-       Legend.setPictureFile(folderPath+'/Style/Legend.png')
-       Legend.setSceneRect(QRectF(0,0,50,50)) 
-       composition.addItem(Legend)	   
-       dpmm = 300 / 25.4
-       width = int(dpmm * composition.paperWidth())
-       height = int(dpmm * composition.paperHeight())
-       image = QImage(QSize(width, height), QImage.Format_ARGB32)
-       image.setDotsPerMeterX(dpmm * 1000)
-       image.setDotsPerMeterY(dpmm * 1000)
-       image.fill(0)
-       imagePainter = QPainter(image)
-       composition.renderPage( imagePainter, 0 )
-       imagePainter.end()
-       image.save(imagePath, "png")
-       QgsMapLayerRegistry.instance().removeMapLayer(layers[0].id())		  
-      self.dlg1.progressBar.setValue(0)
+      canvas = self.iface.mapCanvas()
+      QgsProject.instance().read(projanimation)
+      bridge = QgsLayerTreeMapCanvasBridge(QgsProject.instance().layerTreeRoot(), canvas)
+      bridge.setCanvasLayers()
+      composition = QgsComposition(canvas.mapSettings())
+      composerAsDocument = QDomDocument()
+      composerAsDocument.setContent(QFile(folderPath+'image-jour.qpt'))
+      composition.loadFromTemplate(composerAsDocument, {})
+      title = QgsComposerLabel(composition)
+      title.setText(str(year+'/'+months+'/'+j))
+      title.setFont(QFont("Cambria",15, QFont.Bold))
+      title.setItemPosition(248,5.2)
+      title.adjustSizeToText()  
+      composition.addItem(title)
+      Legend = QgsComposerPicture(composition)
+      Legend.setPictureFile(folderPath+'/Style/Legend.png')
+      Legend.setSceneRect(QRectF(0,0,50,50)) 
+      composition.addItem(Legend)	   
+      dpmm = 300 / 25.4
+      width = int(dpmm * composition.paperWidth())
+      height = int(dpmm * composition.paperHeight())
+      image = QImage(QSize(width, height), QImage.Format_ARGB32)
+      image.setDotsPerMeterX(dpmm * 1000)
+      image.setDotsPerMeterY(dpmm * 1000)
+      image.fill(0)
+      imagePainter = QPainter(image)
+      composition.renderPage( imagePainter, 0 )
+      imagePainter.end()
+      image.save(imagePath, "png")
+      QgsMapLayerRegistry.instance().removeMapLayer(layers.id())		  
+
 	  
-    def executeimage (self):
+    def runimg (self,i,j):
       csv =self.dlg1.box_csv.toPlainText() 
       path=self.dlg1.box_output.toPlainText()
       year=str(self.dlg1.spin_an.value())
@@ -710,8 +703,25 @@ class BioSIMplugin:
       Dday= str(self.dlg1.spin_j.value())
       Fday= str(self.dlg1.spin_j1.value())
       H= str(self.dlg1.spin_h.value())
-      self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H) 
-
+      self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H,i) 
+      self.dlg1.progressBar.setValue(j)
+   
+    def executeimage(self):
+         year=str(self.dlg1.spin_an.value())
+         Dmonth= str(self.dlg1.spin_m.value())
+         Fmonth= str(self.dlg1.spin_m1.value())
+         Dday= str(self.dlg1.spin_j.value())
+         Fday= str(self.dlg1.spin_j1.value())
+         delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday)) 
+         if self.operationlongue==None or not self.operationlongue.isRunning(): 	 
+             self.operationlongue = Operationlongue(self.iface,(delta.days)+1)
+             self.operationlongue.debut.connect(self.csv_image)
+             self.operationlongue.info.connect(self.runimg)            
+             self.operationlongue.fini.connect(self.dlg1.progressBar.setValue(0))
+             self.operationlongue.start()
+         else :
+          self.operationlongue.terminate()
+	  		  
     def addzero(self,a):
 	  a=str(a)
 	  if len(a)==1:
@@ -743,4 +753,8 @@ class BioSIMplugin:
       name=imgFiles[0][0:8]
       filename = path+'/'+name[0:4]+'-'+name[4:6]+'-'+name[6:8]+".gif"
       writeGif(filename, images, duration=0.2)	
-      os.chdir(path)		
+      os.chdir(path)
+
+
+
+###fin###	  
