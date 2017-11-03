@@ -35,6 +35,7 @@ import os.path,time
 from qgis.core import *
 from PyQt4.QtCore import *
 from datetime import date
+from csv_layer import CsvLayer
 
 folderPath = os.path.dirname(__file__)+'/QGIS-PROJ/'
 projectPath = folderPath+'Dispersal.qgs'
@@ -107,6 +108,8 @@ class BioSIMplugin:
         self.timer.setInterval( 60000*60*10 )
         self.timer.timeout.connect(self.displaydate)
         self.timer.start()
+
+
 		
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -316,11 +319,19 @@ class BioSIMplugin:
         self.dlg1.box_output.setText(outDir)
 		
     def linkcsv(self,Csvf):
+      
+      canvas = iface.mapCanvas()
+      selectedcrs="EPSG:4326"
+      target_crs = QgsCoordinateReferenceSystem()
+      target_crs.createFromUserInput(selectedcrs)
+      canvas.setDestinationCrs(target_crs)
       uricsv = "file:///"+Csvf+"?delimiter=%s&xField=%s&yField=%s" % (",","Longitude","Latitude") 
-      layer = QgsVectorLayer(uricsv,'data', "delimitedtext") 
+      layer = QgsVectorLayer(uricsv,'test', "delimitedtext") 
+      layer.setCrs(QgsCoordinateReferenceSystem(crs_wkt)) 
       if not layer.isValid():
          uricsv ="file:///"+Csvf+"?delimiter=%s&xField=%s&yField=%s" % (",","lon","lat")
-         layer = QgsVectorLayer(uricsv,'data', "delimitedtext")
+         layer = QgsVectorLayer(uricsv,'t', "delimitedtext")
+         layer.setCrs(QgsCoordinateReferenceSystem(crs_wkt)) 
       if not layer.isValid():
          print 'is not good'	 
       return uricsv		
@@ -434,7 +445,7 @@ class BioSIMplugin:
         self.settif(tif_[i])
         self.pngout(data,Path)
         self.dlg.progressBar.setValue(j)
-       # QtCore.QCoreApplication.processEvents()	
+        QtCore.QCoreApplication.processEvents()	
 	   
     def gethour(self,csv,day,m):
       file=open(str(csv), 'rb')
@@ -469,8 +480,8 @@ class BioSIMplugin:
         self.makeAnimatedGif(path,extra)
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
-        os.remove(folderPath+'/1.qgs')
-        os.remove(folderPath+'/1.qgs~')
+      #  os.remove(folderPath+'/1.qgs')
+       # os.remove(folderPath+'/1.qgs~')
 		 
     def addcsv(self,data):
         Year=data[0:4]
@@ -602,8 +613,53 @@ class BioSIMplugin:
       if len(data)>12:
        return data [0:12]  	  
     
+    def import_csv(self, csv_path):
+        import csv
+        # Save the path to the file soe we can update it in response to edits
+        #self.csv_path = csv_path
+        csv_file = open(csv_path, 'rb')
+        reader = csv.reader(csv_file)
+        header = reader.next()  
+        # Get sample
+        sample = reader.next()
+        field_sample = dict(zip(header, sample))
+        field_name_types = {}
+        # create dict of fieldname:type
+        for key in field_sample.keys():
+            if field_sample[key].isdigit():
+                field_type = 'integer'
+            else:
+                try:
+                    float(field_sample[key])
+                    field_type = 'real'
+                except ValueError:
+                    field_type = 'string'
+            field_name_types[key] = field_type
+        # Build up the URI needed to create memory layer
+        uri =  "Point?crs=epsg:4326"
+        for fld in header:
+            uri += '&field={}:{}'.format(fld, field_name_types[fld])
+        lyr = QgsVectorLayer(uri, 'csv', 'memory')
+      #  self.lyr.setSubsetString('("Year"=2017 AND "Month"=8 AND "Day"=2)')	
+        csv_file.seek(0)
+        # Skip the header
+        reader.next()
+        lyr.startEditing()
+        for row in reader:
+            flds = dict(zip(header, row))
+            feature = QgsFeature()
+            geometry = QgsGeometry.fromPoint(QgsPoint(float(flds['Longitude']), float(flds['Latitude'])))
+            feature.setGeometry(geometry)
+            feature.setAttributes(row)
+            lyr.addFeature(feature, True)
+        lyr.commitChanges()
+        csv_file.close()
+        return lyr
+       # QgsMapLayerRegistry.instance().addMapLayer(lyr)
+	
+	
     def csv_image(self):
-      Csvin =self.dlg1.box_csv.toPlainText() 
+     # Csvin =self.dlg1.box_csv.toPlainText()
       paths=self.dlg1.box_output.toPlainText()
       QgsProject.instance().clear()	  
       directory =os.path.dirname(paths+'/')  
@@ -612,16 +668,16 @@ class BioSIMplugin:
       layers=[]
       for x in range(0,2):
        layers.append('')
-#################  add csv file  ############################  
       layers[0] = QgsVectorLayer(ameriquenord, "maps", "ogr")
       layers[0].loadNamedStyle(folderPath+'Style/layer.qml')                     
-      layers[0].triggerRepaint() 
+      layers[0].triggerRepaint()
+      QgsMapLayerRegistry.instance().addMapLayer(layers[0])
       layers[1] = QgsVectorLayer(QCmaps, "quebec", "ogr")
       layers[1].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[1].triggerRepaint() 
-      QgsMapLayerRegistry.instance().addMapLayer(layers[0])
       QgsMapLayerRegistry.instance().addMapLayer(layers[1])	
-	
+      #QgsMapLayerRegistry.instance().addMapLayer(self.import_csv(Csvin))
+     	
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H,index):
     #  delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))    
       fd=0
@@ -654,8 +710,7 @@ class BioSIMplugin:
 		j=str(dj)
       imagePath = paths+'/'+year+months+j+'.png' 
       self.subcsvjour(Csvin,str(dj),dm,str(fj),fm,True)
-      uricsv=self.linkcsv(folderPath+'/data.csv')
-      layers = QgsVectorLayer(uricsv,'data', "delimitedtext")                                             
+      layers=self.import_csv(folderPath+'/data.csv')	  
       layers.loadNamedStyle(folderPath+'Style/csv.qml')                    
       layers.triggerRepaint()
       QgsMapLayerRegistry.instance().addMapLayer(layers)       
@@ -691,8 +746,12 @@ class BioSIMplugin:
       composition.renderPage( imagePainter, 0 )
       imagePainter.end()
       image.save(imagePath, "png")
+      del layers
       QgsMapLayerRegistry.instance().removeMapLayer(layers.id())		  
-
+      
+    def fin_pross(self):
+	  self.dlg1.progressBar.setValue(0)
+	  QgsProject.instance().clear()
 	  
     def runimg (self,i,j):
       csv =self.dlg1.box_csv.toPlainText() 
@@ -717,7 +776,7 @@ class BioSIMplugin:
              self.operationlongue = Operationlongue(self.iface,(delta.days)+1)
              self.operationlongue.debut.connect(self.csv_image)
              self.operationlongue.info.connect(self.runimg)            
-             self.operationlongue.fini.connect(self.dlg1.progressBar.setValue(0))
+             self.operationlongue.fini.connect(self.fin_pross)
              self.operationlongue.start()
          else :
           self.operationlongue.terminate()
