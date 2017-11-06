@@ -494,9 +494,11 @@ class BioSIMplugin:
         layern.loadNamedStyle(folderPath+'Style/layer.qml')                     
         layern.triggerRepaint()  	  
         QgsMapLayerRegistry.instance().addMapLayer(layern)        
-        imagePath =folderPath+'/1.qgs'       
-        uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
-        layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")
+        imagePath =folderPath+'/1.qgs' 
+        uricsv=folderPath+'/'+months+day+'.csv'
+        layercsv=self.import_csv(uricsv)		
+        #uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
+       # layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")
         style=folderPath+'Style/newcsv.qml'
         if self.dlg.symbole_Box.currentText()=='petit':
           style=folderPath+'Style/csv1.qml' 		
@@ -521,8 +523,9 @@ class BioSIMplugin:
         imagePath =folderPath+'/1.qgs'
         layer=QgsRasterLayer(tif, hour+':'+minute)
         QgsMapLayerRegistry.instance().addMapLayer(layer)       
-        uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
-        layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 
+        uricsv=folderPath+'/'+months+day+'.csv'
+        layercsv=self.import_csv(uricsv)
+       # layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 
         style=folderPath+'Style/newcsv.qml'
         if self.dlg.symbole_Box.currentText()=='petit':
           style=folderPath+'Style/csv1.qml' 		
@@ -616,10 +619,14 @@ class BioSIMplugin:
     def import_csv(self, csv_path):
         import csv
         # Save the path to the file soe we can update it in response to edits
-        #self.csv_path = csv_path
         csv_file = open(csv_path, 'rb')
         reader = csv.reader(csv_file)
-        header = reader.next()  
+        header = reader.next() 
+        id=-999
+        for col in range(0,len(header)):   
+         if header[col]=='Longitude':  
+          id=0 
+          break 		
         # Get sample
         sample = reader.next()
         field_sample = dict(zip(header, sample))
@@ -639,8 +646,7 @@ class BioSIMplugin:
         uri =  "Point?crs=epsg:4326"
         for fld in header:
             uri += '&field={}:{}'.format(fld, field_name_types[fld])
-        lyr = QgsVectorLayer(uri, 'csv', 'memory')
-      #  self.lyr.setSubsetString('("Year"=2017 AND "Month"=8 AND "Day"=2)')	
+        lyr = QgsVectorLayer(uri, 'csv', 'memory')	
         csv_file.seek(0)
         # Skip the header
         reader.next()
@@ -648,15 +654,16 @@ class BioSIMplugin:
         for row in reader:
             flds = dict(zip(header, row))
             feature = QgsFeature()
-            geometry = QgsGeometry.fromPoint(QgsPoint(float(flds['Longitude']), float(flds['Latitude'])))
+            if id==0:
+              geometry = QgsGeometry.fromPoint(QgsPoint(float(flds['Longitude']), float(flds['Latitude'])))
+            else:
+			 geometry = QgsGeometry.fromPoint(QgsPoint(float(flds['lon']), float(flds['lat'])))
             feature.setGeometry(geometry)
             feature.setAttributes(row)
             lyr.addFeature(feature, True)
         lyr.commitChanges()
         csv_file.close()
         return lyr
-       # QgsMapLayerRegistry.instance().addMapLayer(lyr)
-	
 	
     def csv_image(self):
      # Csvin =self.dlg1.box_csv.toPlainText()
@@ -676,7 +683,7 @@ class BioSIMplugin:
       layers[1].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[1].triggerRepaint() 
       QgsMapLayerRegistry.instance().addMapLayer(layers[1])	
-      #QgsMapLayerRegistry.instance().addMapLayer(self.import_csv(Csvin))
+   
      	
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H,index):
     #  delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday))    
@@ -746,7 +753,7 @@ class BioSIMplugin:
       composition.renderPage( imagePainter, 0 )
       imagePainter.end()
       image.save(imagePath, "png")
-      del layers
+     # del layers
       QgsMapLayerRegistry.instance().removeMapLayer(layers.id())		  
       
     def fin_pross(self):
