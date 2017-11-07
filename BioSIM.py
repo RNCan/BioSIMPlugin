@@ -535,7 +535,7 @@ class BioSIMplugin:
         layercsv.triggerRepaint()
         layercsv.setSubsetString('("Year"='+Year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)		
-        QgsProject.instance().write(QFileInfo(imagePath))
+        QgsProject.instance().write(QFileInfo(imagePath))	
         del layercsv
 		
     def pngout(self,data,paths):
