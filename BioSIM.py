@@ -480,10 +480,10 @@ class BioSIMplugin:
         self.makeAnimatedGif(path,extra)
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
-        os.remove(folderPath+'/1.qgs')
-        os.remove(folderPath+'/1.qgs~')
-        os.remove(folderPath+'/data.csv')
-        os.remove(folderPath+'/data1.csv')
+       # os.remove(folderPath+'/1.qgs')
+      #  os.remove(folderPath+'/1.qgs~')
+      #  os.remove(folderPath+'/data.csv')
+      #  os.remove(folderPath+'/data1.csv')
 		
     def addcsv(self,data):
         Year=data[0:4]
@@ -586,11 +586,9 @@ class BioSIMplugin:
      out = writer(csvf, delimiter=',' , lineterminator='\n')
      rownum = 0
      index_=-999
-     header={}
      for row in data:
       if rownum==0:
        header =row
-
        rownum=1
        out.writerow(header)
        for col in range(0,len(row)):   
