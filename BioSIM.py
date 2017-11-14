@@ -35,7 +35,7 @@ import os.path,time
 from qgis.core import *
 from PyQt4.QtCore import *
 from datetime import date
-from csv_layer import CsvLayer
+#from csv_layer import CsvLayer
 
 folderPath = os.path.dirname(__file__)+'/QGIS-PROJ/'
 projectPath = folderPath+'Dispersal.qgs'
