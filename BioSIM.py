@@ -812,15 +812,16 @@ class BioSIMplugin:
            pass
 			
     def makeAnimatedGif(self,path,extra):
-      from images2gif import writeGif
-      from PIL import Image
+      from images2gif1 import writeGif
+      from PIL import Image, ImageSequence
       os.chdir(path+extra)
       imgFiles = sorted((fn for fn in os.listdir('.') if fn.endswith('.png')))
       images = [Image.open(fn) for fn in imgFiles]
+     # frames = [frame.copy() for frame in ImageSequence.Iterator(images)]
       name=imgFiles[0][0:8]
       filename = path+'/'+name[0:4]+'-'+name[4:6]+'-'+name[6:8]+".gif"
-      writeGif(filename, images, duration=0.2)	
-      os.chdir(path)
+      writeGif(filename, images, duration=0.2,dither=0)	
+      os.chdir("c:/")
 
 
 
