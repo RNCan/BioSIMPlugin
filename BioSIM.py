@@ -10,7 +10,6 @@
         copyright            : (C) 2017 by ahmed
         email                : aa.moutaoufik@gmail.com
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -45,22 +44,19 @@ projanimation= QFileInfo(folderPath+'Dispersal.qgs')
 proj=QgsProject.instance() 
 
 class Operationlongue(QtCore.QThread):
-    info = QtCore.pyqtSignal(int,int)
+    info = QtCore.pyqtSignal(int)
     fini = QtCore.pyqtSignal()
     debut = QtCore.pyqtSignal()
     #========================================================================
     def __init__(self, parent ,n):
         super(Operationlongue, self).__init__(parent)
-        self.n=n
-	
+        self.n=n	
     #========================================================================
     def run(self):
       self.debut.emit()
-      j=0	  
       for i in range(0,self.n):
-        time.sleep(0.5)
-        j+=int(100/(self.n*1.0))	
-        self.info.emit(i,j)		
+      #  time.sleep(0.5)
+        self.info.emit(i)		
       self.fini.emit()	
 
 
@@ -111,12 +107,9 @@ class BioSIMplugin:
 		
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
-
         We implement this ourselves since we do not inherit QObject.
-
         :param message: String for translation.
         :type message: str, QString
-
         :returns: Translated version of message.
         :rtype: QString
         """
@@ -135,39 +128,29 @@ class BioSIMplugin:
         whats_this=None,
         parent=None):
         """Add a toolbar icon to the toolbar.
-
         :param icon_path: Path to the icon for this action. Can be a resource
             path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
         :type icon_path: str
-
         :param text: Text that should be shown in menu items for this action.
         :type text: str
-
         :param callback: Function to be called when the action is triggered.
         :type callback: function
-
         :param enabled_flag: A flag indicating if the action should be enabled
             by default. Defaults to True.
         :type enabled_flag: bool
-
         :param add_to_menu: Flag indicating whether the action should also
             be added to the menu. Defaults to True.
         :type add_to_menu: bool
-
         :param add_to_toolbar: Flag indicating whether the action should also
             be added to the toolbar. Defaults to True.
         :type add_to_toolbar: bool
-
         :param status_tip: Optional text to show in a popup when mouse pointer
             hovers over the action.
         :type status_tip: str
-
         :param parent: Parent widget for the new action. Defaults None.
         :type parent: QWidget
-
         :param whats_this: Optional text to show in the status bar when the
             mouse pointer hovers over the action.
-
         :returns: The action that was created. Note that the action is also
             added to self.actions list.
         :rtype: QAction
@@ -413,8 +396,9 @@ class BioSIMplugin:
          if self.operationlongue==None or not self.operationlongue.isRunning(): 
            if len(self.dlg.box_tif.toPlainText())!=0:	 
              self.operationlongue = Operationlongue(self.iface,len(tif_))
-             self.operationlongue.info.connect(self.open_project)
+           #  self.operationlongue.info.connect(self.open_project)
              self.operationlongue.info.connect(self.progression)
+            # self.operationlongue.info.connect(self.prossbar)
              self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
@@ -430,9 +414,16 @@ class BioSIMplugin:
         msgBox = QMessageBox()
         msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
         msgBox.exec_()
-        self.cleartif()		  
-        		  
-    def progression(self,i,j):
+        self.cleartif()
+
+
+		
+    #def prossbar(self,i):
+    #    self.dlg.progressBar.setValue(i)
+     #   QCoreApplication.processEvents()
+
+		
+    def progression(self,i):
         path=self.dlg.box_output.toPlainText()
         year=str(self.dlg.spin_an.value())		
         months=str(self.dlg.spin_m.value())
@@ -444,8 +435,8 @@ class BioSIMplugin:
         data=self.getdata(tif_[i])
         self.settif(tif_[i])
         self.pngout(data,Path)
-        self.dlg.progressBar.setValue(j)
-        QtCore.QCoreApplication.processEvents()	
+        self.dlg.progressBar.setValue(int((i+1)*(100/(len(tif_)*1.0))))
+        QCoreApplication.processEvents()	
 	   
     def gethour(self,csv,day,m):
       file=open(str(csv), 'rb')
@@ -525,7 +516,7 @@ class BioSIMplugin:
         imagePath =folderPath+'/1.qgs'
         layer=QgsRasterLayer(tif, hour+':'+minute)
         QgsMapLayerRegistry.instance().addMapLayer(layer)       
-        uricsv=folderPath+'/data1.csv'
+        uricsv=folderPath+'/data.csv'
         layercsv=self.import_csv(uricsv,hour+':'+minute)
        # layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 
         style=folderPath+'Style/newcsv.qml'
@@ -825,4 +816,4 @@ class BioSIMplugin:
 
 
 
-###fin###	  
+###fin###
