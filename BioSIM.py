@@ -208,18 +208,34 @@ class BioSIMplugin:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-
+   
+    def test_file(self,path,name):
+        import csv
+        id=False
+        reader = csv.reader(open(path, 'rb'))
+        header = reader.next()  
+        for col in range(0,len(header)):   
+         if header[col]==name:  
+          id=True
+          break
+        return id  
+		  
     def select_csv_file(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
         path= QFileDialog.getOpenFileName(self.dlg, "Open cvs file",lastpath,"CSV files (*.csv)")
-        self.dlg.ok_button.setEnabled(True)
-        if path:
-          settings.setValue("LASTPATH", os.path.dirname(path))
-          self.dlg.box_csv.setText(path)
-          if  not self.dlg.box_output.toPlainText():
-            self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
-   
+        if path:  
+          if self.test_file(path,'Minute'):
+            self.dlg.ok_button.setEnabled(True)
+            settings.setValue("LASTPATH", os.path.dirname(path))
+            self.dlg.box_csv.setText(path)
+            if  not self.dlg.box_output.toPlainText():
+              self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
+          else:
+           msgBox = QMessageBox()
+           msgBox.setText(" unsupported column format!!.")
+           msgBox.exec_()
+
     def displaydate(self):
       import time
       self.dlg1.spin_an.setValue(int(time.strftime("%Y")))
@@ -231,14 +247,21 @@ class BioSIMplugin:
     def select_csv_file1(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
-        path= QFileDialog.getOpenFileName(self.dlg1, "Open cvs file",lastpath,"CSV files (*.csv)")
-        
+        path= QFileDialog.getOpenFileName(self.dlg1, "Open cvs file",lastpath,"CSV files (*.csv)") 
         if path:
-          settings.setValue("LASTPATH", os.path.dirname(path))
-          self.dlg1.box_csv.setText(path)
-          if  not self.dlg1.box_output.toPlainText():
-            self.dlg1.box_output.setText(os.path.dirname(path)+'/Image')
-	
+          if self.test_file(path,'Hour'):
+            settings.setValue("LASTPATH", os.path.dirname(path))
+            self.dlg.box_csv.setText(path)
+            if  not self.dlg.box_output.toPlainText():
+              self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
+          else:
+           msgBox = QMessageBox()
+           msgBox.setText(" unsupported column format!!.")
+           msgBox.exec_()
+
+	  
+	  
+	  
     def select_tif_file(self):
       settings = QSettings("Company name", "Application name")
       last_path = settings.value("LAST_PATH", ".")
@@ -789,9 +812,7 @@ class BioSIMplugin:
     def run(self):
         """Run method that performs all the real work"""	
         self.dlg.show()
-        result = self.dlg.exec_()
-        
-
+        result = self.dlg.exec_()      
         if result:
             pass
 			
