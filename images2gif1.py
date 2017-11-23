@@ -88,7 +88,7 @@ def _writeGifToFile(fp, images, durations, loops):
             # first image
             
             # gather data
-            palette = getheader(im)[1] #im.palette.getdata()[1]
+            palette =getheader(im)[1] #
             data = getdata(im)
             imdes, data = data[0], data[1:]            
             header = getheaderAnim(im)
@@ -97,7 +97,7 @@ def _writeGifToFile(fp, images, durations, loops):
             
             # write global header
             fp.write(header)
-            fp.write(im.palette.getdata()[1]) #palette)
+            fp.write(palette)
             fp.write(appext)
             
             # write image

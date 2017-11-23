@@ -219,7 +219,12 @@ class BioSIMplugin:
           id=True
           break
         return id  
-		  
+	
+    def ifdataexiste(self,csv):
+       file=open(str(csv), 'rb')
+       data = list(reader(file, delimiter=","))
+       return len(data)
+	
     def select_csv_file(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
@@ -249,19 +254,16 @@ class BioSIMplugin:
         lastpath = settings.value("LASTPATH", ".")
         path= QFileDialog.getOpenFileName(self.dlg1, "Open cvs file",lastpath,"CSV files (*.csv)") 
         if path:
-          if self.test_file(path,'Hour'):
+          if self.test_file(path,'Hour') and not( self.test_file(path,'Minute')):
             settings.setValue("LASTPATH", os.path.dirname(path))
-            self.dlg.box_csv.setText(path)
-            if  not self.dlg.box_output.toPlainText():
-              self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
+            self.dlg1.box_csv.setText(path)
+            if  not self.dlg1.box_output.toPlainText():
+              self.dlg1.box_output.setText(os.path.dirname(path)+'/Image')
           else:
            msgBox = QMessageBox()
            msgBox.setText(" unsupported column format!!.")
            msgBox.exec_()
-
-	  
-	  
-	  
+ 	  		  
     def select_tif_file(self):
       settings = QSettings("Company name", "Application name")
       last_path = settings.value("LAST_PATH", ".")
@@ -378,7 +380,7 @@ class BioSIMplugin:
         Csvin=folderPath+'data.csv'
         self.subcsvjour(Csvin,day,months,minute,hour,False)
      
-    def open_project_csv(self,i,j): 
+    def open_project_csv(self,i): 
        path=self.dlg.box_output.toPlainText()		
        Csvin=folderPath+'data.csv'  
        year=str(self.dlg.spin_an.value())
@@ -406,20 +408,20 @@ class BioSIMplugin:
         data=year+months+day+hour+minute
         self.addcsv(data)
         self.pngout(data,Path)	
-        self.dlg.progressBar.setValue(j)
+        self.dlg.progressBar.setValue(int((i+1)*1.47))
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     def lancement(self):
        self.open_csv()
        months=str(self.dlg.spin_m.value())
        day=self.dlg.spin_j.value()
-       if True :#self.gethour(folderPath+'data.csv',day,months):
+       if self.ifdataexiste(folderPath+'data.csv')!=1:#self.gethour(folderPath+'data.csv',day,months):
          tmp=  self.dlg.box_tif.toPlainText()
          tif_ = []
          tif_=tmp.split ('\n')
          if self.operationlongue==None or not self.operationlongue.isRunning(): 
            if len(self.dlg.box_tif.toPlainText())!=0:	 
              self.operationlongue = Operationlongue(self.iface,len(tif_))
-           #  self.operationlongue.info.connect(self.open_project)
+             self.operationlongue.info.connect(self.open_project)
              self.operationlongue.info.connect(self.progression)
             # self.operationlongue.info.connect(self.prossbar)
              self.operationlongue.fini.connect(self.stop)
@@ -438,12 +440,10 @@ class BioSIMplugin:
         msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
         msgBox.exec_()
         self.cleartif()
-
-
 		
     #def prossbar(self,i):
     #    self.dlg.progressBar.setValue(i)
-     #   QCoreApplication.processEvents()
+     #   
 
 		
     def progression(self,i):
@@ -456,10 +456,12 @@ class BioSIMplugin:
         tif_ = []
         tif_=tmp.split ('\n')
         data=self.getdata(tif_[i])
-        self.settif(tif_[i])
-        self.pngout(data,Path)
         self.dlg.progressBar.setValue(int((i+1)*(100/(len(tif_)*1.0))))
-        QCoreApplication.processEvents()	
+        if self.ifdataexiste(folderPath+'data1.csv')!=1:
+         self.settif(tif_[i])
+         self.pngout(data,Path)         
+         if i%2:
+           QCoreApplication.processEvents()		
 	   
     def gethour(self,csv,day,m):
       file=open(str(csv), 'rb')
@@ -539,7 +541,7 @@ class BioSIMplugin:
         imagePath =folderPath+'/1.qgs'
         layer=QgsRasterLayer(tif, hour+':'+minute)
         QgsMapLayerRegistry.instance().addMapLayer(layer)       
-        uricsv=folderPath+'/data.csv'
+        uricsv=folderPath+'/data1.csv'
         layercsv=self.import_csv(uricsv,hour+':'+minute)
        # layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 
         style=folderPath+'Style/newcsv.qml'
@@ -775,7 +777,7 @@ class BioSIMplugin:
 	  self.dlg1.progressBar.setValue(0)
 	  QgsProject.instance().clear()
 
-    def runimg (self,i,j):
+    def runimg (self,i):
       csv =self.dlg1.box_csv.toPlainText() 
       path=self.dlg1.box_output.toPlainText()
       year=str(self.dlg1.spin_an.value())
@@ -785,8 +787,10 @@ class BioSIMplugin:
       Fday= str(self.dlg1.spin_j1.value())
       H= str(self.dlg1.spin_h.value())
       self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H,i) 
-      self.dlg1.progressBar.setValue(j)
-   
+      delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday)) 
+      idx=int(100/(((delta.days)+1)*1.0))
+      self.dlg1.progressBar.setValue(i*idx)
+      QCoreApplication.processEvents()
     def executeimage(self):
          year=str(self.dlg1.spin_an.value())
          Dmonth= str(self.dlg1.spin_m.value())
