@@ -1,15 +1,10 @@
 """ MODULE images2gif
-
 Provides a function (writeGif) to write animated gif from a series
 of PIL images or numpy arrays.
-
 This code is provided as is, and is free to use for all.
-
 Almar Klein (June 2009)
-
 - based on gifmaker (in the scripts folder of the source distribution of PIL)
 - based on gif file structure as provided by wikipedia
-
 """
 
 try:
@@ -89,6 +84,12 @@ def _writeGifToFile(fp, images, durations, loops):
             
             # gather data
             palette =getheader(im)[1] #
+            if not palette:
+              palette =  im.palette.getdata()[1]
+            if not palette:	
+               palette = PIL.ImagePalette.ImageColor
+            if not palette:	
+               palette = im.palette.tobytes()
             data = getdata(im)
             imdes, data = data[0], data[1:]            
             header = getheaderAnim(im)
@@ -204,5 +205,3 @@ def writeGif(filename, images, duration=0.1, loops=0, dither=1):
         print n, 'frames written'
     finally:
         fp.close()
-    
-    

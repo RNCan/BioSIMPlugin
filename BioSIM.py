@@ -836,7 +836,7 @@ class BioSIMplugin:
      # frames = [frame.copy() for frame in ImageSequence.Iterator(images)]
       name=imgFiles[0][0:8]
       filename = path+'/'+name[0:4]+'-'+name[4:6]+'-'+name[6:8]+".gif"
-      writeGif(filename, images, duration=0.2,dither=0)	
+      writeGif(filename, images, duration=0.2)	
       os.chdir("c:/")
 
 
