@@ -487,19 +487,20 @@ class BioSIMplugin:
       return test	
 	  
     def stop(self):
-        self.dlg.progressBar.setValue(98)
         path=self.dlg.box_output.toPlainText()
         year=str(self.dlg.spin_an.value())
         months=str(self.dlg.spin_m.value())
         day=self.dlg.spin_j.value()
         extra='/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)
-        self.makeAnimatedGif(path,extra)
+        if self.dlg.checkGIF.isChecked():
+         self.dlg.progressBar.setValue(98)
+         #self.makeAnimatedGif(path,extra)
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
-       # os.remove(folderPath+'/1.qgs')
-      #  os.remove(folderPath+'/1.qgs~')
-      #  os.remove(folderPath+'/data.csv')
-      #  os.remove(folderPath+'/data1.csv')
+        os.remove(folderPath+'/1.qgs')
+        os.remove(folderPath+'/1.qgs~')
+        os.remove(folderPath+'/data.csv')
+        os.remove(folderPath+'/data1.csv')
 		
     def addcsv(self,data):
         Year=data[0:4]
@@ -774,8 +775,12 @@ class BioSIMplugin:
       del layers
 	  
     def fin_pross(self):
-	  self.dlg1.progressBar.setValue(0)
-	  QgsProject.instance().clear()
+      self.dlg1.progressBar.setValue(0)
+      QgsProject.instance().clear()
+      os.remove(folderPath+'/Dispersal.qgs')
+      os.remove(folderPath+'/Dispersal.qgs~')
+
+	  
 
     def runimg (self,i):
       csv =self.dlg1.box_csv.toPlainText() 
