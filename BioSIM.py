@@ -494,7 +494,7 @@ class BioSIMplugin:
         extra='/'+year+'-'+self.addzero(months)+'-'+self.addzero(day)
         if self.dlg.checkGIF.isChecked():
          self.dlg.progressBar.setValue(98)
-         #self.makeAnimatedGif(path,extra)
+         self.makeAnimatedGif(path,extra)
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
         os.remove(folderPath+'/1.qgs')
