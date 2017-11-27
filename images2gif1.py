@@ -58,18 +58,18 @@ def getAppExt(loops=0):
     return bb
 
 
-def getGraphicsControlExt(duration=0.1):
+def getGraphicsControlExt(duration=0.1, dispose=2,transparent_flag=0,transparency_index=0):
     """ Graphics Control Extension. A sort of header at the start of
     each image. Specifies transparancy and duration. """
     bb = '\x21\xF9\x04'
-    bb += '\x08'  # no transparancy
+    bb += chr(((dispose & 3) << 2)|(transparent_flag & 1))   # no transparancy
     bb += intToBin( int(duration*100) ) # in 100th of seconds
-    bb += '\x00'  # no transparant color
+    bb += chr(transparency_index)   # no transparant color
     bb += '\x00'  # end
     return bb
 
 
-def _writeGifToFile(fp, images, durations, loops):
+def _writeGifToFile(fp, images, durations, loops,disposes):
     """ Given a set of images writes the bytes to the specified stream.
     """
     
@@ -84,10 +84,6 @@ def _writeGifToFile(fp, images, durations, loops):
             
             # gather data
             palette =getheader(im)[1] #
-            if not palette:
-              palette =  im.palette.getdata()[1]
-            if not palette:	
-               palette = PIL.ImagePalette.ImageColor
             if not palette:	
                palette = im.palette.tobytes()
             data = getdata(im)
@@ -148,7 +144,7 @@ def _writeGifToFile(fp, images, durations, loops):
     return frames
 
 
-def writeGif(filename, images, duration=0.1, loops=0, dither=1):
+def writeGif(filename, images, duration=0.1, loops=0, dither=1,dispose=None):
     """ writeGif(filename, images, duration=0.1, loops=0, dither=1)
     Write an animated gif from the specified images. 
     images should be a list of numpy arrays of PIL images.
@@ -160,32 +156,36 @@ def writeGif(filename, images, duration=0.1, loops=0, dither=1):
         raise RuntimeError("Need PIL to write animated gif files.")
     
     images2 = []
-    
-    # convert to PIL
+
+	# convert to PIL
     for im in images:
-        
-        if isinstance(im,Image.Image):
-            images2.append( im.convert('P',dither=dither) )
-            
+        im=im.convert('RGB',dither=dither,colors=255)
+        if PIL and isinstance(im, PIL.Image.Image):
+          im2=im.convert('P',dither=dither,colors=255)
+          images2.append(im2)
         elif np and isinstance(im, np.ndarray):
             if im.dtype == np.uint8:
                 pass
             elif im.dtype in [np.float32, np.float64]:
-                im = (im*255).astype(np.uint8)
+                im = im.copy()
+                im[im<0] = 0
+                im[im>1] = 1
+                im *= 255
+                im = im.astype(np.uint8)
             else:
                 im = im.astype(np.uint8)
             # convert
             if len(im.shape)==3 and im.shape[2]==3:
-                im = Image.fromarray(im,'RGB').convert('P',dither=dither)
+              im = Image.fromarray(im,'RGB').convert('P',dither=dither,colors=255)
             elif len(im.shape)==2:
-                im = Image.fromarray(im,'L').convert('P',dither=dither)
+               im = Image.fromarray(im,'L').convert('P',dither=dither,colors=255)
             else:
                 raise ValueError("Array has invalid shape to be an image.")
             images2.append(im)
-            
+           
         else:
             raise ValueError("Unknown image type.")
-    
+  
     # check duration
     if hasattr(duration, '__len__'):
         if len(duration) == len(images2):
@@ -195,13 +195,22 @@ def writeGif(filename, images, duration=0.1, loops=0, dither=1):
     else:
         durations = [duration for im in images2]
         
-    
+    if dispose is None:
+        dispose = 2
+    if hasattr(dispose, '__len__'):
+        if len(dispose) != len(images2):
+            raise ValueError("len(xy) doesn't match amount of images.")
+    else:
+        dispose = [dispose for im in images2]
+		
+		
+    #images2=convertImagesToPIL(images2,dither)
     # open file
     fp = open(filename, 'wb')
     
     # write
     try:
-        n = _writeGifToFile(fp, images2, durations, loops)
+        n = _writeGifToFile(fp, images2, durations, loops,dispose)
         print n, 'frames written'
     finally:
         fp.close()
