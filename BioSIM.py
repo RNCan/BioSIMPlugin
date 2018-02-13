@@ -208,7 +208,37 @@ class BioSIMplugin:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-   
+    
+	
+    def get_date_csv(self,path):
+      import time
+      import csv      
+      year=int(time.strftime("%Y"))
+      month = 13
+      month1=0
+      day = 32
+      day1=0
+      reader = csv.reader(open(path, 'rb'))
+      header = reader.next()
+      for col in range (0, len(header)):
+	    if header[col]=="Year":
+		  break
+      for header in reader:
+        if int(header[col]) != year:
+           year=int(header[col])
+        if int(header[col+1])< month:		   
+           month=int(header[col+1])
+        if int(header[col+1])> month1:		   
+           month1=int(header[col+1])
+        if (int(header[col+1])== month ) and (int(header[col+2])< day) :		   
+            day=int(header[col+2])        
+        if (int(header[col+1])== month1 ) and (int(header[col+2])>= day1) :		   
+            day1=int(header[col+2])          
+		
+      return (year,month,month1,day,day1)
+	   
+
+	  
     def test_file(self,path,name):
         import csv
         id=False
@@ -257,6 +287,12 @@ class BioSIMplugin:
           if self.test_file(path,'Hour') and not( self.test_file(path,'Minute')):
             settings.setValue("LASTPATH", os.path.dirname(path))
             self.dlg1.box_csv.setText(path)
+            date=self.get_date_csv(path)
+            self.dlg1.spin_an.setValue(int(date[0]))
+            self.dlg1.spin_m.setValue(int(date[1]))
+            self.dlg1.spin_j.setValue(int(date[3]))
+            self.dlg1.spin_m1.setValue(int(date[2]))
+            self.dlg1.spin_j1.setValue(int(date[4]))
             if  not self.dlg1.box_output.toPlainText():
               self.dlg1.box_output.setText(os.path.dirname(path)+'/Image')
           else:
@@ -778,10 +814,7 @@ class BioSIMplugin:
       self.dlg1.progressBar.setValue(0)
       QgsProject.instance().clear()
       os.remove(folderPath+'/Dispersal.qgs')
-      os.remove(folderPath+'/Dispersal.qgs~')
-
-	  
-
+    
     def runimg (self,i):
       csv =self.dlg1.box_csv.toPlainText() 
       path=self.dlg1.box_output.toPlainText()
@@ -790,12 +823,13 @@ class BioSIMplugin:
       Fmonth= str(self.dlg1.spin_m1.value())
       Dday= str(self.dlg1.spin_j.value())
       Fday= str(self.dlg1.spin_j1.value())
-      H= str(self.dlg1.spin_h.value())
+      H= "16"#str(self.dlg1.spin_h.value())
       self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H,i) 
       delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday)) 
       idx=int(100/(((delta.days)+1)*1.0))
       self.dlg1.progressBar.setValue(i*idx)
       QCoreApplication.processEvents()
+    
     def executeimage(self):
          year=str(self.dlg1.spin_an.value())
          Dmonth= str(self.dlg1.spin_m.value())
@@ -837,13 +871,11 @@ class BioSIMplugin:
       from PIL import Image, ImageSequence
       os.chdir(path+extra)
       imgFiles = sorted((fn for fn in os.listdir('.') if fn.endswith('.png')))
-      images = [Image.open(fn) for fn in imgFiles]
-     # frames = [frame.copy() for frame in ImageSequence.Iterator(images)]
+      images = [Image.open(fn).convert('RGB') for fn in imgFiles]
       name=imgFiles[0][0:8]
       filename = path+'/'+name[0:4]+'-'+name[4:6]+'-'+name[6:8]+".gif"
       writeGif(filename, images, duration=0.2)	
       os.chdir("c:/")
-
 
 
 ###fin###

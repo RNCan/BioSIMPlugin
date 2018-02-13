@@ -226,44 +226,6 @@ p, li { white-space: pre-wrap; }
     <number>0</number>
    </property>
   </widget>
-  <widget class="QSpinBox" name="spin_h1">
-   <property name="geometry">
-    <rect>
-     <x>409</x>
-     <y>150</y>
-     <width>42</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="minimum">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <number>24</number>
-   </property>
-   <property name="value">
-    <number>16</number>
-   </property>
-  </widget>
-  <widget class="QSpinBox" name="spin_h">
-   <property name="geometry">
-    <rect>
-     <x>409</x>
-     <y>100</y>
-     <width>42</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="minimum">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <number>24</number>
-   </property>
-   <property name="value">
-    <number>16</number>
-   </property>
-  </widget>
   <widget class="QSpinBox" name="spin_j">
    <property name="geometry">
     <rect>
@@ -337,19 +299,6 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="value">
     <number>8</number>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_j_2">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>80</y>
-     <width>21</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>H</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_date">
