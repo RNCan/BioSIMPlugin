@@ -209,7 +209,7 @@ class BioSIMplugin:
         # remove the toolbar
         del self.toolbar
     
-	
+	#### set automatique date in csv to image######
     def get_date_csv(self,path):
       import time
       import csv      
@@ -232,13 +232,12 @@ class BioSIMplugin:
            month1=int(header[col+1])
         if (int(header[col+1])== month ) and (int(header[col+2])< day) :		   
             day=int(header[col+2])        
-        if (int(header[col+1])== month1 ) and (int(header[col+2])>= day1) :		   
+        if (int(header[col+1])== month1 ) and (int(header[col+2])> day1) and (int(header[col+3])> 14):		   
             day1=int(header[col+2])          
-		
-      return (year,month,month1,day,day1)
-	   
+            
+      return (year,month,month1,day,day1)	   
 
-	  
+	### test csv file format####### 
     def test_file(self,path,name):
         import csv
         id=False
@@ -250,11 +249,13 @@ class BioSIMplugin:
           break
         return id  
 	
+	### test if data existe######
     def ifdataexiste(self,csv):
        file=open(str(csv), 'rb')
        data = list(reader(file, delimiter=","))
        return len(data)
 	
+	#### select csv file for animation windows######
     def select_csv_file(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
@@ -271,6 +272,7 @@ class BioSIMplugin:
            msgBox.setText(" unsupported column format!!.")
            msgBox.exec_()
 
+	#### get date today######	   	   
     def displaydate(self):
       import time
       self.dlg1.spin_an.setValue(int(time.strftime("%Y")))
@@ -279,6 +281,7 @@ class BioSIMplugin:
       self.dlg1.spin_j.setValue(int(time.strftime("%d"))-1)
       self.dlg1.spin_j1.setValue(int(time.strftime("%d")))
  
+    #### select csv file for image windows######
     def select_csv_file1(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
@@ -299,7 +302,8 @@ class BioSIMplugin:
            msgBox = QMessageBox()
            msgBox.setText(" unsupported column format!!.")
            msgBox.exec_()
- 	  		  
+ 	
+	##### select radar image file ######
     def select_tif_file(self):
       settings = QSettings("Company name", "Application name")
       last_path = settings.value("LAST_PATH", ".")
@@ -326,12 +330,14 @@ class BioSIMplugin:
             self.dlg.spin_m.setValue(int(data[4:6]))
             self.dlg.spin_j.setValue(int(data[6:8]))  
 	
+	##### clear filds radar image####
     def cleartif(self):
       self.dlg.box_tif.clear()	
       self.dlg.spin_an.setEnabled(True)
       self.dlg.spin_m.setEnabled(True)
       self.dlg.spin_j.setEnabled(True)
-	  
+	
+    '''
     def addday(self,d,m):
       if int(m)==6 and  int(d)==30:
         d='01'
@@ -344,7 +350,9 @@ class BioSIMplugin:
       m=self.addzero(m)
       d=self.addzero(d)	   
       return m+d  
-	  	  
+    ''' 
+ 	
+	###select output directory for animation windows##
     def select_output_file(self): 
      outputDir = QFileDialog(None, "Select output Directory")
      outputDir.setFileMode(QFileDialog.Directory)
@@ -354,7 +362,8 @@ class BioSIMplugin:
      if outputDir.exec_() == QDialog.Accepted:
         outDir = outputDir.selectedFiles()[0]
         self.dlg.box_output.setText(outDir)	
-				
+	
+	###select output directory for image windows##
     def select_output_file1(self): 
      outputDir = QFileDialog(None, "Select output Directory")
      outputDir.setFileMode(QFileDialog.Directory)
@@ -364,9 +373,9 @@ class BioSIMplugin:
      if outputDir.exec_() == QDialog.Accepted:
         outDir = outputDir.selectedFiles()[0]
         self.dlg1.box_output.setText(outDir)
-		
-    def linkcsv(self,Csvf):
-      
+	
+	## load csv file in QGIS #####
+    def linkcsv(self,Csvf):      
       canvas = iface.mapCanvas()
       selectedcrs="EPSG:4326"
       target_crs = QgsCoordinateReferenceSystem()
@@ -382,7 +391,8 @@ class BioSIMplugin:
       if not layer.isValid():
          print 'is not good'	 
       return uricsv		
-	  
+	
+	### creat tmp file csv###
     def open_csv(self):
         Csvin=self.dlg.box_csv.toPlainText()
         year=str(self.dlg.spin_an.value())		
@@ -403,7 +413,8 @@ class BioSIMplugin:
         directory =os.path.dirname(imagePath)  
         if  not os.path.exists(directory):
           os.makedirs(directory)
-		
+	
+	### create tmp file csv with date radar file ##
     def open_project(self,i):
         tmp=  self.dlg.box_tif.toPlainText() 
         tif_ = []
@@ -415,7 +426,8 @@ class BioSIMplugin:
         minute=data[10:12]
         Csvin=folderPath+'data.csv'
         self.subcsvjour(Csvin,day,months,minute,hour,False)
-     
+   
+    ###  open csv file in qgis without radar image ####  
     def open_project_csv(self,i): 
        path=self.dlg.box_output.toPlainText()		
        Csvin=folderPath+'data.csv'  
@@ -445,7 +457,8 @@ class BioSIMplugin:
         self.addcsv(data)
         self.pngout(data,Path)	
         self.dlg.progressBar.setValue(int((i+1)*1.47))
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+	
+	### create image for animation####
     def lancement(self):
        self.open_csv()
        months=str(self.dlg.spin_m.value())
@@ -481,7 +494,7 @@ class BioSIMplugin:
     #    self.dlg.progressBar.setValue(i)
      #   
 
-		
+	### add tif file in qgis and get png image in output#####	
     def progression(self,i):
         path=self.dlg.box_output.toPlainText()
         year=str(self.dlg.spin_an.value())		
@@ -498,7 +511,8 @@ class BioSIMplugin:
          self.pngout(data,Path)         
          if i%2:
            QCoreApplication.processEvents()		
-	   
+	
+	### get hour from csv file####
     def gethour(self,csv,day,m):
       file=open(str(csv), 'rb')
       data = list(reader(file, delimiter=","))
@@ -521,7 +535,8 @@ class BioSIMplugin:
 		       break
       file.close()  
       return test	
-	  
+	
+	## stop operation ########
     def stop(self):
         path=self.dlg.box_output.toPlainText()
         year=str(self.dlg.spin_an.value())
@@ -534,10 +549,11 @@ class BioSIMplugin:
         self.dlg.progressBar.setValue(0)
         self.iface.newProject()
         os.remove(folderPath+'/1.qgs')
-        os.remove(folderPath+'/1.qgs~')
+        #os.remove(folderPath+'/1.qgs~')
         os.remove(folderPath+'/data.csv')
         os.remove(folderPath+'/data1.csv')
-		
+	
+	### add csv file in qgis 
     def addcsv(self,data):
         Year=data[0:4]
         months=data[4:6]
@@ -563,6 +579,7 @@ class BioSIMplugin:
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)
         QgsProject.instance().write(QFileInfo(imagePath))
 
+	#### set tif file in layer gqis######	
     def settif(self,tif):
         self.iface.newProject()
         layern = QgsVectorLayer(ameriquenord, "maps", "ogr")
@@ -590,7 +607,8 @@ class BioSIMplugin:
         QgsMapLayerRegistry.instance().addMapLayer(layercsv)		
         QgsProject.instance().write(QFileInfo(imagePath))	
         del layercsv
-		
+	
+	##### get png image from a composer template qgis#######
     def pngout(self,data,paths):
         png_name=data
         Year=png_name[0:4]
@@ -629,7 +647,8 @@ class BioSIMplugin:
         composition.renderPage( imagePainter, 0 )
         imagePainter.end()
         image.save(imagePath, "png")
-        		
+     
+	##### sub divide the csv file##### 
     def subcsvjour(self,csv,dd,md,df,mf,minute): 
      data = list(reader(open(str(csv), 'rb'), delimiter=","))
      if minute:
@@ -656,13 +675,15 @@ class BioSIMplugin:
          if (int(row[index_-1])== int(md) and int(row[index_])== int(dd) and int(row[index_+1])== int(mf) and int(row[index_+2])== int(df)) :
            out.writerow(row) 
      csvf.close()	
-			
+	
+	##### set tif files source in tab ####
     def get_tif(self):
       tmp=  self.dlg.box_tif.toPlainText()
       tif_ = []
       tif_=tmp.split ('\n')
       return tif_
-	 
+	
+    ### get date and hour from tif file ###	
     def getdata(self,indata):
       data = str(indata)
       for i in range(0,len(data)-len('.tif')):
@@ -672,6 +693,7 @@ class BioSIMplugin:
       if len(data)>12:
        return data [0:12]  	  
     
+	### add projection epsg:4326 to file csv in qgis ######
     def import_csv(self, csv_path,title):
         import csv
         # Save the path to the file soe we can update it in response to edits
@@ -721,6 +743,7 @@ class BioSIMplugin:
         csv_file.close()
         return lyr
 	
+	### perpare image from csv file in image jour####
     def csv_image(self):
      # Csvin =self.dlg1.box_csv.toPlainText()
       paths=self.dlg1.box_output.toPlainText()
@@ -739,7 +762,8 @@ class BioSIMplugin:
       layers[1].loadNamedStyle(folderPath+'Style/layer.qml')                     
       layers[1].triggerRepaint() 
       QgsMapLayerRegistry.instance().addMapLayer(layers[1])	
-       	
+    
+   	### add layers to qgis for image jour####
     def qgis_image(self,paths,Csvin,year,Dmonth,Fmonth,Dday,Fday,H,index):   
       fd=0
       if int(Dmonth)!= int(Fmonth):
@@ -809,12 +833,14 @@ class BioSIMplugin:
       image.save(imagePath, "png")   
       QgsMapLayerRegistry.instance().removeMapLayer(layers.id())		  
       del layers
-	  
+	
+	### clear qgis and delet a poject ####
     def fin_pross(self):
       self.dlg1.progressBar.setValue(0)
       QgsProject.instance().clear()
       os.remove(folderPath+'/Dispersal.qgs')
     
+	### execute create image ###
     def runimg (self,i):
       csv =self.dlg1.box_csv.toPlainText() 
       path=self.dlg1.box_output.toPlainText()
@@ -829,7 +855,8 @@ class BioSIMplugin:
       idx=int(100/(((delta.days)+1)*1.0))
       self.dlg1.progressBar.setValue(i*idx)
       QCoreApplication.processEvents()
-    
+   
+    ####  execute create image ###
     def executeimage(self):
          year=str(self.dlg1.spin_an.value())
          Dmonth= str(self.dlg1.spin_m.value())
@@ -851,21 +878,24 @@ class BioSIMplugin:
 	  if len(a)==1:
 	     a='0'+a
 	  return a
-	  		
+	
+    ###	run animation windows####
     def run(self):
         """Run method that performs all the real work"""	
         self.dlg.show()
         result = self.dlg.exec_()      
         if result:
             pass
-			
+	
+	### run image windows ###
     def runimage(self):
         """Run method that performs all the real work"""	
         self.dlg1.show()
         result = self.dlg1.exec_()
         if result:          
            pass
-			
+	
+	### make GIf animation from png	###	
     def makeAnimatedGif(self,path,extra):
       from images2gif1 import writeGif
       from PIL import Image, ImageSequence
