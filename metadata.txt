@@ -30,7 +30,7 @@ tags=
 
 homepage=https://github.com/aamoutaoufik
 category=Plugins
-icon=icon.png
+icon=DailyDispersal.png
 # experimental flag
 experimental=True
 

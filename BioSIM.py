@@ -185,14 +185,14 @@ class BioSIMplugin:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/BioSIMplugin/icon.png'
+        icon_path = ':/plugins/BioSIMplugin/Animation.png'
         self.add_action(
             icon_path,
             text=self.tr(u'BioSIM animation'),
             callback=self.run,
             parent=self.iface.mainWindow())
 		
-        icon_path = ':/plugins/BioSIMplugin/image-icon.png'
+        icon_path = ':/plugins/BioSIMplugin/DailyDispersal.png'
         self.add_action(
             icon_path,
             text=self.tr(u'BioSIM Image jour'),
