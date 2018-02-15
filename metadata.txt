@@ -9,7 +9,7 @@
 [general]
 name=Dispersal BioSIM
 qgisMinimumVersion=2.0
-description=csv to image 
+description=plugin qgis create image from csv file ( data from BioSIM) 
 version=0.1
 author=ahmed
 email=aa.moutaoufik@gmail.com
@@ -17,7 +17,7 @@ email=aa.moutaoufik@gmail.com
 about=BioSIM
 
 tracker=git
-repository=https://github.com/aamoutaoufik/py.git
+repository=https://github.com/RNCan/BioSIMPlugin
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=https://github.com/aamoutaoufik/py.git
 # Tags are comma separated with spaces allowed
 tags=
 
-homepage=https://github.com/aamoutaoufik
+homepage=https://github.com/RNCan/BioSIMPlugin
 category=Plugins
 icon=DailyDispersal.png
 # experimental flag
