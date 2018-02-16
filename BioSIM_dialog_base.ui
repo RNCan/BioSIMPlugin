@@ -394,9 +394,9 @@ p, li { white-space: pre-wrap; }
   <widget class="QLabel" name="label_date_6">
    <property name="geometry">
     <rect>
-     <x>580</x>
+     <x>560</x>
      <y>190</y>
-     <width>61</width>
+     <width>81</width>
      <height>21</height>
     </rect>
    </property>
@@ -408,7 +408,7 @@ p, li { white-space: pre-wrap; }
     </font>
    </property>
    <property name="text">
-    <string>Symbol</string>
+    <string>Symbol Size:</string>
    </property>
   </widget>
   <widget class="QComboBox" name="symbole_Box">
