@@ -25,8 +25,10 @@ from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QDialog,QFont,QImage,QPainter,QMessageBox
 from PyQt4.QtXml import QDomDocument
 from qgis.gui import *
+
 # Initialize Qt resources from file resources.py
 import resources
+
 # Import the code for the dialog
 from BioSIM_dialog import BioSIMpluginDialog
 from BioSIM_dialog_image import BioSIMpluginDialogimage
@@ -34,8 +36,8 @@ import os.path,time
 from qgis.core import *
 from PyQt4.QtCore import *
 from datetime import date
-#from csv_layer import CsvLayer
 
+#from csv_layer import CsvLayer
 folderPath = os.path.dirname(__file__)+'/QGIS-PROJ/'
 projectPath = folderPath+'Dispersal.qgs'
 ameriquenord=folderPath+'ameriquenord.shp'
@@ -55,7 +57,6 @@ class Operationlongue(QtCore.QThread):
     def run(self):
       self.debut.emit()
       for i in range(0,self.n):
-      #  time.sleep(0.5)
         self.info.emit(i)		
       self.fini.emit()	
 
@@ -80,7 +81,7 @@ class BioSIMplugin:
                 QCoreApplication.installTranslator(self.translator)
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&csvtoimage ')
+        self.menu = self.tr(u'&BioSIM Plugin ')        
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'BioSIMplugin')
         self.toolbar.setObjectName(u'BioSIMplugin')
@@ -188,14 +189,14 @@ class BioSIMplugin:
         icon_path = ':/plugins/BioSIMplugin/Animation.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'BioSIM animation'),
+            text=self.tr(u'BioSIM Animation'),
             callback=self.run,
             parent=self.iface.mainWindow())
 		
         icon_path = ':/plugins/BioSIMplugin/DailyDispersal.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'BioSIM Image jour'),
+            text=self.tr(u'BioSIM Image Jour'),
             callback=self.runimage,
             parent=self.iface.mainWindow())
 
@@ -203,7 +204,7 @@ class BioSIMplugin:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&csvtoimage '),
+                self.tr(u'&BioSIM Plugin '),
                 action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
@@ -472,7 +473,6 @@ class BioSIMplugin:
              self.operationlongue = Operationlongue(self.iface,len(tif_))
              self.operationlongue.info.connect(self.open_project)
              self.operationlongue.info.connect(self.progression)
-            # self.operationlongue.info.connect(self.prossbar)
              self.operationlongue.fini.connect(self.stop)
              self.operationlongue.fini.connect(self.cleartif)
              self.operationlongue.start()
@@ -489,11 +489,7 @@ class BioSIMplugin:
         msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
         msgBox.exec_()
         self.cleartif()
-		
-    #def prossbar(self,i):
-    #    self.dlg.progressBar.setValue(i)
-     #   
-
+		    
 	### add tif file in qgis and get png image in output#####	
     def progression(self,i):
         path=self.dlg.box_output.toPlainText()
@@ -568,11 +564,9 @@ class BioSIMplugin:
         imagePath =folderPath+'/1.qgs' 
         uricsv=folderPath+'/data1.csv'
         layercsv=self.import_csv(uricsv,hour+':'+minute)		
-        #uricsv=self.linkcsv(folderPath+'/'+months+day+'.csv')
-       # layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext")
         style=folderPath+'Style/newcsv.qml'
-        if self.dlg.symbole_Box.currentText()=='petit':
-          style=folderPath+'Style/csv1.qml' 		
+        if self.dlg.symbole_Box.currentText()=='small':
+          style=folderPath+'Style/csv1.qml' 		  
         layercsv.loadNamedStyle(style)  		                  
         layercsv.triggerRepaint()
         layercsv.setSubsetString('("Year"='+Year+' AND "Month"='+months+' AND "Day"='+day+' AND "Hour"='+str(hour)+' AND "Minute"='+str(minute)+')')		
@@ -599,7 +593,8 @@ class BioSIMplugin:
         layercsv=self.import_csv(uricsv,hour+':'+minute)
        # layercsv = QgsVectorLayer(uricsv,hour+':'+minute, "delimitedtext") 
         style=folderPath+'Style/newcsv.qml'
-        if self.dlg.symbole_Box.currentText()=='petit':
+
+        if self.dlg.symbole_Box.currentText()=='small':
           style=folderPath+'Style/csv1.qml' 		
         layercsv.loadNamedStyle(style)                    
         layercsv.triggerRepaint()
@@ -836,8 +831,10 @@ class BioSIMplugin:
 	
 	### clear qgis and delet a poject ####
     def fin_pross(self):
-      self.dlg1.progressBar.setValue(0)
+      self.dlg1.progressBar.setValue(100)
+      time.sleep(0.05)
       QgsProject.instance().clear()
+      self.dlg1.progressBar.setValue(0)
       os.remove(folderPath+'/Dispersal.qgs')
     
 	### execute create image ###
@@ -853,9 +850,10 @@ class BioSIMplugin:
       self.qgis_image(path,csv,year,Dmonth,Fmonth,Dday,Fday,H,i) 
       delta=date(int(year),int(Fmonth),int(Fday))-date(int(year),int(Dmonth),int(Dday)) 
       idx=int(100/(((delta.days)+1)*1.0))
-      self.dlg1.progressBar.setValue(i*idx)
-      QCoreApplication.processEvents()
-   
+      self.dlg1.progressBar.setValue((i+1)*idx)
+      if i%2:
+        QCoreApplication.processEvents()
+  
     ####  execute create image ###
     def executeimage(self):
          year=str(self.dlg1.spin_an.value())
