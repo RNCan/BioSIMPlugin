@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>csvtoimage </string>
+   <string>BioSIM Image Jour </string>
   </property>
   <widget class="QTextBrowser" name="box_output">
    <property name="geometry">
@@ -204,10 +204,10 @@ p, li { white-space: pre-wrap; }
     </sizepolicy>
    </property>
    <property name="minimum">
-    <number>2010</number>
+    <number>1800</number>
    </property>
    <property name="maximum">
-    <number>2020</number>
+    <number>3020</number>
    </property>
    <property name="value">
     <number>2017</number>
