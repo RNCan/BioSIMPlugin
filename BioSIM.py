@@ -270,7 +270,7 @@ class BioSIMplugin:
               self.dlg.box_output.setText(os.path.dirname(path)+'/Image')
           else:
            msgBox = QMessageBox()
-           msgBox.setText(" unsupported column format!!.")
+           msgBox.setText(" unsupported column format!!. minute column not exist")
            msgBox.exec_()
 
 	#### get date today######	   	   
@@ -281,14 +281,16 @@ class BioSIMplugin:
       self.dlg1.spin_m1.setValue(int(time.strftime("%m")))
       self.dlg1.spin_j.setValue(int(time.strftime("%d"))-1)
       self.dlg1.spin_j1.setValue(int(time.strftime("%d")))
- 
+      self.dlg.spin_an.setValue(int(time.strftime("%Y")))
+      self.dlg.spin_m.setValue(int(time.strftime("%m")))
+      self.dlg.spin_j.setValue(int(time.strftime("%d")))
     #### select csv file for image windows######
     def select_csv_file1(self): 
         settings = QSettings("Company name", "Application name")
         lastpath = settings.value("LASTPATH", ".")
         path= QFileDialog.getOpenFileName(self.dlg1, "Open cvs file",lastpath,"CSV files (*.csv)") 
         if path:
-          if self.test_file(path,'Hour') and not( self.test_file(path,'Minute')):
+          if not( self.test_file(path,'Minute')):
             settings.setValue("LASTPATH", os.path.dirname(path))
             self.dlg1.box_csv.setText(path)
             date=self.get_date_csv(path)
@@ -486,7 +488,7 @@ class BioSIMplugin:
           self.operationlongue.terminate()	
        else :
         msgBox = QMessageBox()
-        msgBox.setText("la date selectionnee ne figure pas dans le fiche!!.")
+        msgBox.setText("The selected date does not appear in the file CSV!!.")
         msgBox.exec_()
         self.cleartif()
 		    
